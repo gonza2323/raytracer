@@ -1,8 +1,13 @@
 #include <SDL3/SDL.h>
 #include <stdint.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 int main()
 {
+    glm::mat4 m(1.0f);
+    auto t = glm::translate(m, glm::vec3(1, 0, 0));
+    
     SDL_Init(SDL_INIT_VIDEO);
 
     const int WIDTH = 800;
