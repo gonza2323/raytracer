@@ -6,7 +6,7 @@
 ## Preparación del entorno
 
 
-### 1. Clonar el repositorio RECURSIVAMENTE
+### 1. Clonar el repositorio recursivamente
 
 ```bash
 git clone --recurse-submodules git@github.com:gonza2323/raytracer.git
@@ -44,7 +44,10 @@ sudo apt install -y \
   libibus-1.0-dev
 ```
 
-### 4. Extensiones VSCode
+
+### 4. Configuración de VSCode
+
+#### 4.1 Instalación de extensiones
 
 Instalar estas extensiones:
 
@@ -53,16 +56,45 @@ Instalar estas extensiones:
 * clangd de LLVM
 
 
-### 5. Cómo desarrollar con VSCode
+#### 4.2 Seleccionar configuración de compilación
 
 1. Abrir el directorio que contiene el proyecto con VSCode.
 2. Presionar `Ctrl+Shift+p` y buscar el comando "Select Configure Preset" y seleccionar "Debug" (*).
-3. Presionar `Ctrl+Shift+p` y buscar el comando "Set Build Target" y seleccionar "raytracer" (*).
+3. Presionar `Ctrl+Shift+p` y buscar el comando "Set Build Target" y seleccionar "raytracer".
 
-Ya con esto, puede debuggearse y ejecutarse el programa con los botones de debug y run en la barra inferior de VSCode (`F5` y `Ctrl+F5` no funcionan). Deberían funcionar bien los breakpoints y la ejecución paso a paso (si se seleccionó "Debug" como configuración).
+Ya con esto, puede debuggearse y ejecutarse el programa con los botones de debug y run en la barra inferior de VSCode (`F5` y `Ctrl+F5` no funcionan). Deberían funcionar bien los breakpoints y la ejecución paso a paso (si se seleccionó "Debug" como configuración). Si se quiere compilar sin ejecutar, hay que apretar el botón "Build"
 
 (*) Están definidas dos configuraciones distintas para compilar el proyecto: "Debug" y "Release".
 
-*  La opción "Debug" compila el proyecto, incluyendo símbolos de debugging para que podamos ejecutar paso a paso, colocar breakpoints, etc. Esta configuración desactiva todas las optimizaciones que puede hacer el compilador, por lo que va a andar bastante más lento.
+*  Debug: si compilamos con esta configuración, se incluyen símbolos de debugging para que podamos ejecutar paso a paso, colocar breakpoints, etc. Esta configuración desactiva todas las optimizaciones que puede hacer el compilador, por lo que va a andar bastante más lento.
 
-* La configuración "Release" optimiza al máximo el código, haciendo que vaya mucho más rápido. Pero como el código generado es muy distinto al fuente, se hace imposible debuggear paso a paso, colocar breakpoints, etc. Sirve más que nada para el ejecutable final, y para ir viendo qué tan rápido funciona el raytracer.
+* Release: optimiza al máximo el código, haciendo que vaya mucho más rápido. Pero como el código generado es muy distinto al fuente, se hace imposible debuggear paso a paso, colocar breakpoints, etc. Sirve más que nada para crear el ejecutable final, y para ir viendo qué tan rápido funciona verdaderamente el renderizador.
+
+
+#### 4.3 Configurar Intellisense
+
+1. Crear, si no existe, `./.vscode/settings.json` dentro del directorio del proyecto.
+
+2. Incluir adentro del archivo el siguiente código:
+
+    ```json
+    {
+      "C_Cpp.intelliSenseEngine": "disabled",
+      "clangd.arguments": [
+        "--compile-commands-dir=build/debug"
+      ]
+    }
+    ```
+
+### 5. Binarios
+
+Cuando se compila el proyecto, el ejecutable final se encuentra en `build/debug/raytracer` o en `build/release/raytracer` dependiendo de la configuración seleccionada.
+
+Para compilar desde consola y no a través de VSCode se puede ejecutar
+
+```bash
+cmake --preset debug
+cmake --build build/debug
+```
+
+o con "release" respectivamente.
