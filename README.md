@@ -28,20 +28,13 @@ cd raytracer
 
 ```bash
 sudo apt install -y \
-  build-essential \
-  cmake \
-  clang \
-  clangd \
-  ninja-build \
-  git \
-  curl \
-  zip unzip \
-  pkg-config \
-  python3 \
-  autoconf autoconf-archive automake libtool \
-  libx11-dev libxft-dev libxext-dev \
-  libwayland-dev libxkbcommon-dev libegl1-mesa-dev \
-  libibus-1.0-dev
+  build-essential git make clang clangd \
+  pkg-config cmake ninja-build gnome-desktop-testing libasound2-dev libpulse-dev \
+  libaudio-dev libfribidi-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
+  libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev \
+  libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
+  libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev libthai-dev \
+  libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev
 ```
 
 
@@ -59,10 +52,10 @@ Instalar estas extensiones:
 #### 4.2 Seleccionar configuración de compilación
 
 1. Abrir el directorio que contiene el proyecto con VSCode.
-2. Presionar `Ctrl+Shift+p` y buscar el comando "Select Configure Preset" y seleccionar "Debug" (*).
-3. Presionar `Ctrl+Shift+p` y buscar el comando "Set Build Target" y seleccionar "raytracer".
+2. Al abrir el proyecto, debería preguntarnos qué configuración para compilar queremos usar (debug o release). Seleccionamos "release". Si no ocurre, presionar `Ctrl+Shift+p` y buscar el comando "Select Configure Preset" y seleccionar "Debug". Tarda bastante, así que paciencia. (*)
+3. Presionar `Ctrl+Shift+p` y buscar el comando "Set Build Target" y seleccionar "raytracer". No debería hacer falta este paso, pero por las dudas.
 
-Ya con esto, puede debuggearse y ejecutarse el programa con los botones de debug y run en la barra inferior de VSCode (`F5` y `Ctrl+F5` no funcionan). Deberían funcionar bien los breakpoints y la ejecución paso a paso (si se seleccionó "Debug" como configuración). Si se quiere compilar sin ejecutar, hay que apretar el botón "Build"
+Ya con esto, puede debuggearse y ejecutarse el programa con los botones de debug y run que se encuentran la barra inferior de VSCode (`F5` y `Ctrl+F5` no funcionan). Deberían funcionar bien los breakpoints y la ejecución paso a paso (si se seleccionó "Debug" como configuración). Si se quiere compilar sin ejecutar, hay que apretar el botón "Build"
 
 (*) Están definidas dos configuraciones distintas para compilar el proyecto: "Debug" y "Release".
 
@@ -72,6 +65,8 @@ Ya con esto, puede debuggearse y ejecutarse el programa con los botones de debug
 
 
 #### 4.3 Configurar Intellisense
+
+Por defecto, el intellisense no funciona bien para las dependencias. Puede arreglarse de la siguiente forma.
 
 1. Crear, si no existe, `./.vscode/settings.json` dentro del directorio del proyecto.
 
@@ -86,11 +81,14 @@ Ya con esto, puede debuggearse y ejecutarse el programa con los botones de debug
     }
     ```
 
+3. Reiniciar VSCode.
+
+
 ### 5. Binarios
 
 Cuando se compila el proyecto, el ejecutable final se encuentra en `build/debug/raytracer` o en `build/release/raytracer` dependiendo de la configuración seleccionada.
 
-Para compilar desde consola y no a través de VSCode se puede ejecutar
+Para compilar desde consola y no a través de VSCode, se puede ejecutar:
 
 ```bash
 cmake --preset debug
