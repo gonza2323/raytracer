@@ -8,6 +8,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(raytracer
     src/main.cpp
+    src/renderer.cpp
+    src/camera.cpp
+    src/scene.cpp
+    src/sphere.cpp
 )
 
 find_package(SDL3 CONFIG REQUIRED)
