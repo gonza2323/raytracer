@@ -7,7 +7,6 @@
 
 #include "scene.h"
 #include "renderer.h"
-#include "sphere.h"
 
 
 int main(int argc, char* argv[])

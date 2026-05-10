@@ -7,6 +7,8 @@
       "features": ["x11", "wayland"],
       "default-features": false
     },
-    "glm"
+    "glm",
+    "fastgltf",
+    "stb"
   ]
 }

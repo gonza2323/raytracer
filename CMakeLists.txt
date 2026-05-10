@@ -12,13 +12,19 @@ add_executable(raytracer
     src/camera.cpp
     src/scene.cpp
     src/sphere.cpp
+    src/third_party/stb_image_impl.cpp
 )
+
+
+# Dependencies
 
 find_package(SDL3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(fastgltf CONFIG REQUIRED)
 
 target_link_libraries(raytracer
     PRIVATE
         SDL3::SDL3
         glm::glm
+        fastgltf::fastgltf
 )
