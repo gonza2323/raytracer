@@ -32,7 +32,7 @@ bool Sphere::intersect(Ray ray, HitData& hit_data) {
     }
 
     hit_data.pos = ray.origin + t * ray.dir;
-    hit_data.color = color;
+    hit_data.material_index = material_index;
     hit_data.normal = glm::normalize(hit_data.pos - pos);
     hit_data.t = t;
 

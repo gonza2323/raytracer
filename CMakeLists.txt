@@ -13,6 +13,7 @@ add_executable(raytracer
     src/scene.cpp
     src/sphere.cpp
     src/third_party/stb_image_impl.cpp
+    src/triangle.cpp
 )
 
 
@@ -27,4 +28,13 @@ target_link_libraries(raytracer
         SDL3::SDL3
         glm::glm
         fastgltf::fastgltf
+)
+
+
+# Crear un symlink en el dir del ejecutable a assets/
+
+file(CREATE_LINK
+    ${CMAKE_SOURCE_DIR}/assets
+    ${CMAKE_BINARY_DIR}/assets
+    SYMBOLIC
 )

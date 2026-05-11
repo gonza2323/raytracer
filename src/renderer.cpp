@@ -16,7 +16,7 @@ Renderer::Renderer(Scene& scene, int height)
     
     pixels.resize(width * height);
 
-    generateTiles();
+    generate_tiles();
 }
 
 bool Renderer::advance() {
@@ -24,13 +24,13 @@ bool Renderer::advance() {
         return false;
     
     Tile tile = tileQueue.back();
-    processTile(tile);
+    process_tile(tile);
     
     tileQueue.pop_back();
     return true;
 }
 
-void Renderer::generateTiles() {
+void Renderer::generate_tiles() {
     for (int y = 0; y < height; y += TILE_SIZE) {
         int y_end = std::min(y + TILE_SIZE, height);
         
@@ -43,19 +43,21 @@ void Renderer::generateTiles() {
     }
 }
 
-void Renderer::processTile(Tile& tile) {
+void Renderer::process_tile(Tile& tile) {
     for (int y = tile.y_start; y < tile.y_end; y++) {
         for (int x = tile.x_start; x < tile.x_end; x++) {
-            processPixel(x, y);
+            process_pixel(x, y);
         }
     }
 }
 
-void Renderer::processPixel(int x, int y) {
-    // TODO: Deberíamos hacerlo desde la perspectiva de la cámara
-    // glm::vec3 ray = scene.camera.generateRayForPixel(x, y);
+void Renderer::process_pixel(int x, int y) {
 
-    // TODO revisar bien este cálculo
+    // Esto que está acá debe ir en la clase CamraCamera
+    // que tenga un método generate_ray(int x, int y) que
+    // retorne el rayo en la dirección correcta
+    // también falta que tenga en cuenta la rotación de la cámara
+
     float sensor_pos_x_rel = (float)x / (width-1) - 0.5;
     float sensor_pos_y_rel = -((float)y / (height-1) - 0.5);
 
@@ -65,26 +67,34 @@ void Renderer::processPixel(int x, int y) {
     glm::vec3 ray_direction = glm::vec3(sensor_pos_x, sensor_pos_y, -scene.camera.focal_length);
     glm::vec3 ray_origin(scene.camera.pos);
 
+    // hasta acá ===============
+
+
     Ray ray = {ray_origin, ray_direction};
-    
-    HitData hit_data;
-    bool hit = scene.intersect(ray, hit_data);
 
-    glm::vec3 background_color(0.05f);
-    glm::vec3 color = background_color;
-    if (hit) {
-        // TODO Por ahora solo una luz direccional, pero habría que usar las luces de la escena.
-        glm::vec3 light_dir = glm::normalize(glm::vec3(1.0, -2.0, -1.0));
-        glm::vec3 light_color = glm::vec3(1.0, 1.0, 1.0);
-        float lighting_factor = std::max(glm::dot(-light_dir, hit_data.normal), 0.0f);
-        color = lighting_factor * light_color * hit_data.color;
-    }
+    glm::vec3 color = shoot_ray(ray);
 
-    glm::ivec3 pixel = toPixel(color);
+    glm::ivec3 pixel = process_color(color);
     write_pixel(x, y, pixel);
 }
 
-void Renderer::write_pixel(int x, int y, glm::ivec3 pixel) {
+// este método tendría que ser recursivo e ir acumulando la luz resultante
+glm::vec3 Renderer::shoot_ray(Ray& ray) {
+    HitData hit_data;
+    bool hit = scene.intersect(ray, hit_data);
+
+    // si no hay hit, retornamos color de fondo
+    if (!hit)
+        return glm::vec3(0.05f);
+
+    // TODO Por ahora solo una luz direccional, pero habría que usar las luces de la escena.
+    glm::vec3 light_dir = glm::normalize(glm::vec3(1.0, -2.0, -1.0));
+    glm::vec3 light_color = glm::vec3(1.0, 1.0, 1.0);
+    float lighting_factor = std::max(glm::dot(-light_dir, hit_data.normal), 0.0f);
+    return lighting_factor * light_color * scene.materials[hit_data.material_index].color;
+}
+
+void Renderer::write_pixel(int x, int y, glm::ivec3& pixel) {
     pixels[y * width + x] =
         (255 << 24) | // alpha channel
         (pixel.r << 16) |

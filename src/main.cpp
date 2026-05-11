@@ -2,8 +2,10 @@
 #include <SDL3/SDL_timer.h>
 #include <cstdint>
 #include <stdint.h>
+#include <random>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <string>
 
 #include "scene.h"
 #include "renderer.h"
@@ -15,10 +17,10 @@ int main(int argc, char* argv[])
 
     // dimensiones de la imagen
     int width;
-    int height = 720;
+    int height = 128;
 
     // cámara
-    glm::vec3 camera_pos({0,0,30});
+    glm::vec3 camera_pos({0,6,6});
     glm::vec3 camera_rot(0.0f);
     float camera_focal_length = 40 * 0.001;   // 50 mm
     float camera_sensor_size_x = 36 * 0.001;  // 36 mm
@@ -29,28 +31,9 @@ int main(int argc, char* argv[])
     // escena
     Scene scene = Scene(camera);
 
-    // esferas
-    const int SPHERE_AMOUNT = 10;
-
-    for (int i = 0; i < SPHERE_AMOUNT; i++) {
-
-        glm::vec3 sphere_color{
-            (float)rand() / RAND_MAX,
-            (float)rand() / RAND_MAX,
-            (float)rand() / RAND_MAX
-        };
-
-        glm::vec3 sphere_pos{
-            ((float)rand() / RAND_MAX) * 10.0f - 5.0f,  // -5 to 5
-            ((float)rand() / RAND_MAX) * 10.0f - 5.0f,  // -5 to 5
-            ((float)rand() / RAND_MAX) * 10.0f - 5.0f,  // -5 to 5
-        };
-
-        float sphere_radius = 2.0f + ((float)rand() / RAND_MAX) * 1.0f;
-        sphere_radius = 2.0f;
-
-        scene.spheres.push_back({ sphere_pos, sphere_radius, sphere_color });
-    }
+    // cargar escena de prueba
+    std::string file_path = "assets/AntiqueCamera.glb";
+    load_scene_from_path(scene, file_path);
 
     // renderizador
     Renderer renderer(scene, height);
