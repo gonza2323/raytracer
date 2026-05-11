@@ -7,12 +7,12 @@
 #include <glm/ext/quaternion_geometric.hpp>
 #include <glm/ext/vector_float3.hpp>
 
-Renderer::Renderer(Scene& scene, int width)
+Renderer::Renderer(Scene& scene, int height)
     : scene(scene),
-      width(width)
+      height(height)
 {
     float cameraAspectRatio = scene.camera.getAspectRatio();
-    this->height = std::round(width / cameraAspectRatio);
+    this->width = std::round(height * cameraAspectRatio);
     
     pixels.resize(width * height);
 

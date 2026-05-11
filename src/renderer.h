@@ -13,7 +13,7 @@ public:
     
     bool advance();
 
-    int getHeight() { return height; }
+    int getWidth() { return width; }
     uint32_t* getPixels() { return pixels.data(); }
     
 private:

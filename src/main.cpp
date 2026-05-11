@@ -14,8 +14,8 @@ int main(int argc, char* argv[])
     // INICIALIZAR ESCENA
 
     // dimensiones de la imagen
-    int width = 800;
-    int height;
+    int width;
+    int height = 720;
 
     // cámara
     glm::vec3 camera_pos({0,0,30});
@@ -53,8 +53,8 @@ int main(int argc, char* argv[])
     }
 
     // renderizador
-    Renderer renderer(scene, width);
-    height = renderer.getHeight();
+    Renderer renderer(scene, height);
+    width = renderer.getWidth();
 
     
     // INICIALIZAR GUI
