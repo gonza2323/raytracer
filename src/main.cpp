@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
 
     // dimensiones de la imagen
     int width;
-    int height = 128;
+    int height = 720;
 
     // cámara
     glm::vec3 camera_pos({0,6,6});

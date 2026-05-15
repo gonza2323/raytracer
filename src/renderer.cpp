@@ -53,7 +53,7 @@ void Renderer::process_tile(Tile& tile) {
 
 void Renderer::process_pixel(int x, int y) {
 
-    // Esto que está acá debe ir en la clase CamraCamera
+    // Esto que está acá debe ir en la clase Camera
     // que tenga un método generate_ray(int x, int y) que
     // retorne el rayo en la dirección correcta
     // también falta que tenga en cuenta la rotación de la cámara

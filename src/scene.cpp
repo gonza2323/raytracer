@@ -1,5 +1,11 @@
 #include "scene.h"
 #include "hit_data.h"
+#include "ray.h"
+#include "lights.h"
+#include "triangle.h"
+#include "bvh/bvh_node.h"
+#include "constants.h"
+#include "interval.h"
 #include <cmath>
 #include <filesystem>
 #include <glm/ext/matrix_transform.hpp>
@@ -15,22 +21,21 @@
 #include <iostream>
 
 bool Scene::intersect(Ray ray, HitData& hit_data) {
-    bool hit = false;
-    float closest_t = MAXFLOAT;
-
-    HitData temp_hit;
-
-    for (Triangle& sphere : triangles) {
-        if (sphere.intersect(ray, temp_hit)) {
-            hit = true;
-            if (temp_hit.t < closest_t) {
-                closest_t = temp_hit.t;
-                hit_data = temp_hit;
-            }
-        }
+    if (!bvh_root) {
+        return false;
     }
 
-    return hit;
+    // Use Interval to track valid ray range
+    Interval ray_t(0.001, infinity);
+    return bvh_root->intersect(ray, hit_data, triangles, ray_t);
+}
+
+void Scene::build_bvh() {
+    if (triangles.empty()) {
+        return;
+    }
+
+    bvh_root = BVHNode::build(triangles, 0, triangles.size());
 }
 
 void load_scene_from_path(Scene& scene, std::string& file_path) {
@@ -254,4 +259,7 @@ void load_scene_from_path(Scene& scene, std::string& file_path) {
         << "Loaded "
         << scene.triangles.size()
         << " triangles\n";
+
+    // Build BVH for acceleration
+    scene.build_bvh();
 }

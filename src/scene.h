@@ -6,19 +6,26 @@
 #include "camera.h"
 #include "hit_data.h"
 #include "ray.h"
-#include "lights/light.h"
+#include "lights.h"
 #include "triangle.h"
+#include "bvh/bvh_node.h"
 
 struct Scene {
     Camera camera;
     std::vector<Triangle> triangles;
     std::vector<Light*> lights;
     std::vector<Material> materials;
+    BVHNode* bvh_root = nullptr;
 
     Scene(Camera camera)
         :camera(camera) { }
     
+    ~Scene() {
+        delete bvh_root;
+    }
+
     bool intersect(Ray ray, HitData& hit_data);
+    void build_bvh();
 };
 
 

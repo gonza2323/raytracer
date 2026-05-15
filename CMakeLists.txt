@@ -14,6 +14,7 @@ add_executable(raytracer
     src/sphere.cpp
     src/third_party/stb_image_impl.cpp
     src/triangle.cpp
+    src/bvh/bvh_node.cpp
 )
 
 

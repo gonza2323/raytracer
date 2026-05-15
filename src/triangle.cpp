@@ -53,3 +53,17 @@ bool Triangle::intersect(Ray ray, HitData& hit_data) {
 
     return true;
 }
+
+BoundingBox Triangle::generate_bounding_box() {
+    const glm::vec3 min_point = glm::min(
+        glm::min(v0.pos, v1.pos),
+        v2.pos
+    );
+
+    const glm::vec3 max_point = glm::max(
+        glm::max(v0.pos, v1.pos),
+        v2.pos
+    );
+
+    return BoundingBox(min_point, max_point);
+}
