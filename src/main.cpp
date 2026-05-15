@@ -20,9 +20,9 @@ int main(int argc, char* argv[])
     int height = 720;
 
     // cámara
-    glm::vec3 camera_pos({0,6,6});
-    glm::vec3 camera_rot(0.0f);
-    float camera_focal_length = 40 * 0.001;   // 50 mm
+    glm::vec3 camera_pos({6,9,6});
+    glm::vec3 camera_rot({-0.5,0.7,0.0});
+    float camera_focal_length = 30 * 0.001;   // 30 mm
     float camera_sensor_size_x = 36 * 0.001;  // 36 mm
     float camera_sensor_size_y = 24 * 0.001;  // 24 mm
 

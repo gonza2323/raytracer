@@ -1,5 +1,4 @@
 #include "renderer.h"
-#include "camera.h"
 #include "hit_data.h"
 #include "ray.h"
 #include "color.h"
@@ -58,22 +57,8 @@ void Renderer::process_pixel(int x, int y) {
     // retorne el rayo en la dirección correcta
     // también falta que tenga en cuenta la rotación de la cámara
 
-    float sensor_pos_x_rel = (float)x / (width-1) - 0.5;
-    float sensor_pos_y_rel = -((float)y / (height-1) - 0.5);
-
-    float sensor_pos_x = sensor_pos_x_rel * scene.camera.size_x;
-    float sensor_pos_y = sensor_pos_y_rel * scene.camera.size_y;
-    
-    glm::vec3 ray_direction = glm::vec3(sensor_pos_x, sensor_pos_y, -scene.camera.focal_length);
-    glm::vec3 ray_origin(scene.camera.pos);
-
-    // hasta acá ===============
-
-
-    Ray ray = {ray_origin, ray_direction};
-
+    Ray ray = scene.camera.generateRayForPixel(x, y, width, height);
     glm::vec3 color = shoot_ray(ray);
-
     glm::ivec3 pixel = process_color(color);
     write_pixel(x, y, pixel);
 }
