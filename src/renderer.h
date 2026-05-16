@@ -28,6 +28,6 @@ private:
     void generate_tiles();
     void process_tile(Tile& tile);
     void process_pixel(int x, int y);
-    glm::vec3 shoot_ray(Ray& ray);
+    glm::vec3 shoot_ray(Ray& ray, int depth);
     void write_pixel(int x, int y, glm::ivec3& pixel);
 };
