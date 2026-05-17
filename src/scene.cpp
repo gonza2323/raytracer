@@ -30,6 +30,16 @@ bool Scene::intersect(Ray ray, HitData& hit_data) {
     return bvh_root->intersect(ray, hit_data, triangles, ray_t);
 }
 
+bool Scene::is_occluded(Ray ray, float max_t) {
+    if (!bvh_root) {
+        return false;
+    }
+
+    HitData hit_data;
+    Interval ray_t(0.001, max_t);
+    return bvh_root->intersect(ray, hit_data, triangles, ray_t);
+}
+
 void Scene::build_bvh() {
     if (triangles.empty()) {
         return;
@@ -74,6 +84,8 @@ void load_scene_from_path(Scene& scene, std::string& file_path) {
     std::cout << "Nodes: " << asset.nodes.size() << "\n";
     std::cout << "Meshes: " << asset.meshes.size() << "\n";
     std::cout << "Materials: " << asset.materials.size() << "\n";
+    std::cout << "Textures: " << asset.textures.size() << "\n";
+    std::cout << "Images: " << asset.images.size() << "\n";
 
     // Default material
     scene.materials.push_back({

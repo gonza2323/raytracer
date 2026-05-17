@@ -25,6 +25,7 @@ struct Scene {
     }
 
     bool intersect(Ray ray, HitData& hit_data);
+    bool is_occluded(Ray ray, float max_t);
     void build_bvh();
 };
 

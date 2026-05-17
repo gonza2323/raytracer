@@ -1,12 +1,14 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_timer.h>
 #include <cstdint>
+#include <glm/ext/vector_float3.hpp>
 #include <stdint.h>
 #include <random>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <string>
 
+#include "lights.h"
 #include "scene.h"
 #include "renderer.h"
 
@@ -20,20 +22,24 @@ int main(int argc, char* argv[])
     int height = 720;
 
     // cámara
-    glm::vec3 camera_pos({6,9,6});
-    glm::vec3 camera_rot({-0.5,0.7,0.0});
+    glm::vec3 camera_pos({-2.44,6.66,5.87});
+    glm::vec3 camera_rot({0.0,0.0,0.0});
     float camera_focal_length = 30 * 0.001;   // 30 mm
     float camera_sensor_size_x = 36 * 0.001;  // 36 mm
     float camera_sensor_size_y = 24 * 0.001;  // 24 mm
 
     Camera camera(camera_pos, camera_rot, camera_focal_length,camera_sensor_size_x, camera_sensor_size_y);
-
+    
     // escena
     Scene scene = Scene(camera);
 
     // cargar escena de prueba
-    std::string file_path = "assets/AntiqueCamera.glb";
+    std::string file_path = "assets/Test.glb";
     load_scene_from_path(scene, file_path);
+
+    // agregar luces
+    PointLight light{glm::vec3(50.0f), glm::vec3(1.0f, 10.0f, 5.0f)};
+    scene.lights.push_back(&light);
 
     // renderizador
     Renderer renderer(scene, height);

@@ -11,6 +11,7 @@ add_executable(raytracer
     src/renderer.cpp
     src/camera.cpp
     src/scene.cpp
+    src/lights.cpp
     src/sphere.cpp
     src/third_party/stb_image_impl.cpp
     src/triangle.cpp

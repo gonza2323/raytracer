@@ -42,3 +42,11 @@ inline glm::vec3 random_unit_vector()
             return glm::normalize(p); // Normalizamos para que la longitud sea exactamente 1
     }
 }
+
+inline glm::vec3 random_on_hemisphere(glm::vec3& normal) {
+    glm::vec3 on_unit_sphere = random_unit_vector();
+    if (dot(on_unit_sphere, normal) > 0.0) // In the same hemisphere as the normal
+        return on_unit_sphere;
+    else
+        return -on_unit_sphere;
+}
