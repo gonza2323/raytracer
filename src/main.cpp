@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <glm/ext/vector_float3.hpp>
 #include <stdint.h>
-#include <random>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <string>
@@ -11,6 +10,7 @@
 #include "lights.h"
 #include "scene.h"
 #include "renderer.h"
+#include "scene_loader.h"
 
 
 int main(int argc, char* argv[])
@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
 
     // dimensiones de la imagen
     int width;
-    int height = 720;
+    int height = 520;
 
     // cámara
     glm::vec3 camera_pos({-2.44,6.66,5.87});
@@ -35,14 +35,15 @@ int main(int argc, char* argv[])
 
     // cargar escena de prueba
     std::string file_path = "assets/Test.glb";
-    load_scene_from_path(scene, file_path);
+    SceneLoader::load_from_path(scene, file_path);
 
     // agregar luces
     PointLight light{glm::vec3(50.0f), glm::vec3(1.0f, 10.0f, 5.0f)};
     scene.lights.push_back(&light);
 
     // renderizador
-    Renderer renderer(scene, height);
+    int no_samples = 1;
+    Renderer renderer(scene, height, no_samples);
     width = renderer.getWidth();
 
     

@@ -10,7 +10,7 @@
 
 class Renderer {
 public:
-    Renderer(Scene& scene, int width);
+    Renderer(Scene& scene, int width, int no_samples);
     
     bool advance();
 
@@ -21,7 +21,7 @@ private:
     Scene& scene;
     
     int TILE_SIZE = 64;
-    int width, height;
+    int width, height, no_samples;
     std::vector<uint32_t> pixels;
     std::vector<Tile> tileQueue;
 

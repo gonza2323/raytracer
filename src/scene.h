@@ -19,7 +19,7 @@ struct Scene {
 
     Scene(Camera camera)
         :camera(camera) { }
-    
+
     ~Scene() {
         delete bvh_root;
     }
@@ -28,6 +28,3 @@ struct Scene {
     bool is_occluded(Ray ray, float max_t);
     void build_bvh();
 };
-
-
-void load_scene_from_path(Scene& scene, std::string& file_path);
