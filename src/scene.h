@@ -10,11 +10,17 @@
 #include "triangle.h"
 #include "bvh/bvh_node.h"
 
+struct Image {
+    int width, height, channels;
+    std::vector<unsigned char> data;
+};
+
 struct Scene {
     Camera camera;
     std::vector<Triangle> triangles;
     std::vector<Light*> lights;
     std::vector<Material> materials;
+    std::vector<Image> textures;
     BVHNode* bvh_root = nullptr;
 
     Scene(Camera camera)

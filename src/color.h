@@ -12,6 +12,10 @@ static inline glm::vec3 gammaCorrect(const glm::vec3& c) {
     return glm::pow(c, glm::vec3(invGamma));
 }
 
+static inline glm::vec3 toLinear(const glm::vec3& c) {
+    return glm::pow(c, glm::vec3(2.2f));
+}
+
 static inline glm::ivec3 process_color(const glm::vec3& color) {
     glm::vec3 mapped = toneMap(color);
     glm::vec3 gamma  = gammaCorrect(mapped);

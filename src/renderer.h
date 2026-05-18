@@ -29,6 +29,8 @@ private:
     void process_tile(Tile& tile);
     void process_pixel(int x, int y);
     glm::vec3 shoot_ray(Ray& ray, int depth);
+    void resolve_surface_data(HitData& hit_data);
     glm::vec3 calculate_direct_lighting(HitData& hit_data);
+    glm::vec3 sample_texture(int texture_index, glm::vec2 uv);
     void write_pixel(int x, int y, glm::ivec3& pixel);
 };

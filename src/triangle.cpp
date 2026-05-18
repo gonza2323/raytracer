@@ -41,14 +41,25 @@ bool Triangle::intersect(Ray ray, HitData& hit_data) {
     hit_data.t = t;
     hit_data.pos = ray.origin + ray.dir * t;
 
-    glm::vec3 normal = glm::normalize(glm::cross(edge1, edge2));
+    // Barycentric coordinates: u for v1, v for v2, w for v0
+    float w = 1.0f - u - v;
 
-    // Optional: make normals face against the ray
-    if (glm::dot(normal, ray.dir) > 0.0f) {
-        normal = -normal;
+    // Interpolate normal
+    hit_data.shading_normal = glm::normalize(w * v0.normal + u * v1.normal + v * v2.normal);
+
+    // Interpolate UVs
+    for (int i = 0; i < 2; ++i) {
+        hit_data.uvs[i] = w * v0.uvs[i] + u * v1.uvs[i] + v * v2.uvs[i];
     }
 
-    hit_data.normal = normal;
+    glm::vec3 geometric_normal = glm::normalize(glm::cross(edge1, edge2));
+
+    // Optional: make normals face against the ray
+    if (glm::dot(geometric_normal, ray.dir) > 0.0f) {
+        geometric_normal = -geometric_normal;
+    }
+
+    hit_data.normal = geometric_normal;
     hit_data.material_index = material_index;
 
     return true;

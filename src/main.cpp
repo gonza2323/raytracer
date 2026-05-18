@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
     scene.lights.push_back(&light);
 
     // renderizador
-    int no_samples = 1;
+    int no_samples = 30;
     Renderer renderer(scene, height, no_samples);
     width = renderer.getWidth();
 

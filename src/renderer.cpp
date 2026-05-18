@@ -87,19 +87,47 @@ glm::vec3 Renderer::shoot_ray(Ray& ray, int depth)
     if (!scene.intersect(ray, hit_data))
         return glm::vec3(0.0f);
 
-    glm::vec3 bounce_direction = random_on_hemisphere(hit_data.normal);
+    resolve_surface_data(hit_data);
+
+    glm::vec3 bounce_direction = random_on_hemisphere(hit_data.shading_normal);
     Ray scattered_ray(hit_data.pos + hit_data.normal * 0.001f, bounce_direction);
     
-    glm::vec3 surface_color = scene.materials[hit_data.material_index].color;
-
     glm::vec3 direct_lighting = calculate_direct_lighting(hit_data);
     
-    float cosine_factor = std::max(glm::dot(bounce_direction, hit_data.normal), 0.0f);
+    float cosine_factor = std::max(glm::dot(bounce_direction, hit_data.shading_normal), 0.0f);
 
     glm::vec3 indirect_light = shoot_ray(scattered_ray, depth - 1);
     glm::vec3 indirect_lighting = indirect_light * cosine_factor;
 
-    return (direct_lighting + indirect_lighting) * surface_color;
+    return (direct_lighting + indirect_lighting) * hit_data.color;
+}
+
+void Renderer::resolve_surface_data(HitData& hit_data) {
+    const Material& mat = scene.materials[hit_data.material_index];
+    
+    // Base Color
+    hit_data.color = mat.base_color_factor;
+    if (mat.base_color_texture.texture_index != -1) {
+        glm::vec3 tex_color = sample_texture(mat.base_color_texture.texture_index, hit_data.uvs[mat.base_color_texture.uv_index]);
+        hit_data.color *= toLinear(tex_color);
+    }
+
+    // Roughness & Metallic
+    hit_data.roughness = mat.roughness_factor;
+    hit_data.metallic = mat.metallic_factor;
+    if (mat.metallic_roughness_texture.texture_index != -1) {
+        glm::vec3 tex_rm = sample_texture(mat.metallic_roughness_texture.texture_index, hit_data.uvs[mat.metallic_roughness_texture.uv_index]);
+        // Green channel: roughness, Blue channel: metallic
+        hit_data.roughness *= tex_rm.g;
+        hit_data.metallic *= tex_rm.b;
+    }
+
+    // Normal Map
+    hit_data.normal_map_normal = glm::vec3(0.0f, 0.0f, 1.0f); // Default tangent-space normal
+    if (mat.normal_texture.texture_index != -1) {
+        glm::vec3 tex_n = sample_texture(mat.normal_texture.texture_index, hit_data.uvs[mat.normal_texture.uv_index]);
+        hit_data.normal_map_normal = glm::normalize(tex_n * 2.0f - 1.0f);
+    }
 }
 
 glm::vec3 Renderer::calculate_direct_lighting(HitData& hit_data) {
@@ -109,7 +137,7 @@ glm::vec3 Renderer::calculate_direct_lighting(HitData& hit_data) {
         glm::vec3 light_dir = light->get_direction(hit_data.pos);
         glm::vec3 light_dir_normalized = glm::normalize(light_dir);
 
-        float cosine_factor = std::max(glm::dot(-light_dir_normalized, hit_data.normal), 0.0f);
+        float cosine_factor = std::max(glm::dot(-light_dir_normalized, hit_data.shading_normal), 0.0f);
 
         if (cosine_factor <= 0)
             continue;
@@ -119,8 +147,6 @@ glm::vec3 Renderer::calculate_direct_lighting(HitData& hit_data) {
 
         // Check if light is visible
         bool is_visible = false;
-
-        // TODO esto está horrible, lo hizo claudio
 
         // For PointLight, only check occlusion up to the light distance
         if (PointLight* point_light = dynamic_cast<PointLight*>(light)) {
@@ -139,6 +165,33 @@ glm::vec3 Renderer::calculate_direct_lighting(HitData& hit_data) {
     }
 
     return total_light;
+}
+
+glm::vec3 Renderer::sample_texture(int texture_index, glm::vec2 uv) {
+    if (texture_index < 0 || texture_index >= static_cast<int>(scene.textures.size())) {
+        return glm::vec3(1.0f);
+    }
+    
+    const Image& img = scene.textures[texture_index];
+    if (img.data.empty()) return glm::vec3(1.0f);
+
+    // Repeat wrapping
+    float u = uv.x - std::floor(uv.x);
+    float v = uv.y - std::floor(uv.y);
+
+    int x = static_cast<int>(u * img.width);
+    int y = static_cast<int>(v * img.height);
+    
+    // Clamp to avoid out of bounds due to floating point precision
+    x = std::clamp(x, 0, img.width - 1);
+    y = std::clamp(y, 0, img.height - 1);
+
+    int pixel_index = (y * img.width + x) * 4;
+    return glm::vec3(
+        img.data[pixel_index + 0] / 255.0f,
+        img.data[pixel_index + 1] / 255.0f,
+        img.data[pixel_index + 2] / 255.0f
+    );
 }
 
 void Renderer::write_pixel(int x, int y, glm::ivec3& pixel)
