@@ -1,3 +1,6 @@
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_timer.h>
 #include <cstdint>
@@ -22,6 +25,7 @@ int main(int argc, char* argv[])
     std::string scene_path = "assets/Test.glb";
     int no_samples = 30;
     std::string output_path = "output.png";
+    bool headless = false;
     
     // Parse command-line arguments
     for (int i = 1; i < argc; ++i) {
@@ -35,6 +39,8 @@ int main(int argc, char* argv[])
             no_samples = std::stoi(argv[++i]);
         } else if ((arg == "-o" || arg == "--output") && i + 1 < argc) {
             output_path = argv[++i];
+        } else if (arg == "--headless") {
+            headless = true;
         }
     }
 
@@ -66,7 +72,18 @@ int main(int argc, char* argv[])
     Renderer renderer(scene, height, no_samples);
     width = renderer.getWidth();
 
-    
+    // HEADLESS MODE - Render and save without UI
+    if (headless) {
+        bool tiles_left = true;
+        while (tiles_left) {
+            tiles_left = renderer.advance();
+        }
+        
+        // Save the rendered image
+        stbi_write_png(output_path.c_str(), width, height, 4, renderer.getPixels(), width * sizeof(uint32_t));
+        return 0;
+    }
+
     // INICIALIZAR GUI
 
     SDL_Init(SDL_INIT_VIDEO);
@@ -115,6 +132,11 @@ int main(int argc, char* argv[])
             SDL_RenderClear(sdl_renderer);
             SDL_RenderTexture(sdl_renderer, texture, NULL, NULL);
             SDL_RenderPresent(sdl_renderer);
+            
+            // Save image when rendering is completed
+            if (completed) {
+                stbi_write_png(output_path.c_str(), width, height, 4, renderer.getPixels(), width * sizeof(uint32_t));
+            }
         }
 
         if (completed)
