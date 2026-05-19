@@ -15,11 +15,33 @@
 
 int main(int argc, char* argv[])
 {
+    // PARSE PROGRAM ARGUMENTS
+    
+    // Default values
+    int height = 520;
+    std::string scene_path = "assets/Test.glb";
+    int no_samples = 30;
+    std::string output_path = "output.png";
+    
+    // Parse command-line arguments
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        
+        if ((arg == "-h" || arg == "--height") && i + 1 < argc) {
+            height = std::stoi(argv[++i]);
+        } else if ((arg == "-s" || arg == "--scene") && i + 1 < argc) {
+            scene_path = argv[++i];
+        } else if ((arg == "-n" || arg == "--samples") && i + 1 < argc) {
+            no_samples = std::stoi(argv[++i]);
+        } else if ((arg == "-o" || arg == "--output") && i + 1 < argc) {
+            output_path = argv[++i];
+        }
+    }
+
     // INICIALIZAR ESCENA
 
     // dimensiones de la imagen
     int width;
-    int height = 520;
 
     // cámara
     glm::vec3 camera_pos({-2.44,6.66,5.87});
@@ -34,15 +56,13 @@ int main(int argc, char* argv[])
     Scene scene = Scene(camera);
 
     // cargar escena de prueba
-    std::string file_path = "assets/Test.glb";
-    SceneLoader::load_from_path(scene, file_path);
+    SceneLoader::load_from_path(scene, scene_path);
 
     // agregar luces
     PointLight light{glm::vec3(50.0f), glm::vec3(1.0f, 10.0f, 5.0f)};
     scene.lights.push_back(&light);
 
     // renderizador
-    int no_samples = 30;
     Renderer renderer(scene, height, no_samples);
     width = renderer.getWidth();
 
