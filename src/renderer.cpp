@@ -47,6 +47,7 @@ void Renderer::generate_tiles()
 
             Tile tile = {x, x_end, y, y_end};
             tileQueue.push_back(tile);
+            total_tiles++;
         }
     }
 }

@@ -9,6 +9,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <string>
+#include <iostream>
+#include <iomanip>
 
 #include "lights.h"
 #include "scene.h"
@@ -77,7 +79,13 @@ int main(int argc, char* argv[])
         bool tiles_left = true;
         while (tiles_left) {
             tiles_left = renderer.advance();
+            int total = renderer.getTotalTiles();
+            int remaining = renderer.getRemainingTiles();
+            int progress = total - remaining;
+            int percent = (progress * 100) / total;
+            std::cout << "\rProgress: " << std::setw(3) << percent << "%" << std::flush;
         }
+        std::cout << "\nRendering complete!" << std::endl;
         
         // Save the rendered image
         stbi_write_png(output_path.c_str(), width, height, 4, renderer.getPixels(), width * sizeof(uint32_t));
@@ -119,6 +127,11 @@ int main(int argc, char* argv[])
 
         if (!completed) {
             bool tiles_left = renderer.advance();
+            int total = renderer.getTotalTiles();
+            int remaining = renderer.getRemainingTiles();
+            int progress = total - remaining;
+            int percent = (progress * 100) / total;
+            std::cout << "\rProgress: " << std::setw(3) << percent << "%" << std::flush;
             completed = !tiles_left;
             
             // Actualizar la imagen 
@@ -135,6 +148,7 @@ int main(int argc, char* argv[])
             
             // Save image when rendering is completed
             if (completed) {
+                std::cout << "\nRendering complete!" << std::endl;
                 stbi_write_png(output_path.c_str(), width, height, 4, renderer.getPixels(), width * sizeof(uint32_t));
             }
         }

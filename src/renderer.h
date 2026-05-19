@@ -16,12 +16,15 @@ public:
 
     int getWidth() { return width; }
     uint32_t* getPixels() { return pixels.data(); }
+    int getTotalTiles() { return total_tiles; }
+    int getRemainingTiles() { return (int)tileQueue.size(); }
     
 private:
     Scene& scene;
     
     int TILE_SIZE = 64;
     int width, height, no_samples;
+    int total_tiles = 0;
     std::vector<uint32_t> pixels;
     std::vector<Tile> tileQueue;
 
