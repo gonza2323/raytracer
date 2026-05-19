@@ -65,11 +65,10 @@ void Renderer::process_tile(Tile& tile)
 void Renderer::process_pixel(int x, int y)
 {
     glm::vec3 light(0.0f);
-    Ray ray = scene.camera.generateRayForPixel(x, y, width, height);
     
     for (int i = 0; i < no_samples; i++) {
-        glm::vec3 sample = shoot_ray(ray, 8);
-        light += sample;
+        Ray ray = scene.camera.generateRayForPixelAA(x, y, width, height);
+        light += shoot_ray(ray, 8);
     }
 
     light /= no_samples;

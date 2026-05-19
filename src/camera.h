@@ -19,4 +19,5 @@ struct Camera {
 
     // Devuelve el rayo que sale de esta camara hacia el pixel (x, y)
     Ray generateRayForPixel(int x, int y, int image_width, int image_height);
+    Ray generateRayForPixelAA(int x, int y, int image_width, int image_height);
 };
