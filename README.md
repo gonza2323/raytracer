@@ -150,13 +150,13 @@ Una escena contiene geometría (triángulos), materiales, texturas y luces. Se c
 ### Headless (recomendado para batch)
 
 ```bash
-mpirun -n 4 ./build/debug/raytracer --headless -s assets/Test.glb -h 520 -n 30 -o output.png
+mpirun -n 4 --oversubscribe ./build/release/raytracer --headless -s assets/Test.glb -h 520 -n 30 -o output.png
 ```
 
 ### Interactivo (ventana SDL en `rank 0`)
 
 ```bash
-mpirun -n 4 ./build/debug/raytracer -s assets/Test.glb -h 520 -n 30 -o output.png
+mpirun -n 4 --oversubscribe ./build/release/raytracer -s assets/Test.glb -h 520 -n 30 -o output.png
 ```
 
 ## Consistencia del render
