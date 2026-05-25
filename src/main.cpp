@@ -1,21 +1,22 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_timer.h>
+#include <mpi.h>
+
 #include <cstdint>
 #include <glm/ext/vector_float3.hpp>
-#include <stdint.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <string>
-#include <iostream>
-#include <iomanip>
+#include <vector>
+
+#include <SDL3/SDL.h>
 
 #include "lights.h"
 #include "scene.h"
 #include "renderer.h"
 #include "scene_loader.h"
+#include "mpi/mpi_scheduler.h"
 
 
 int main(int argc, char* argv[])
@@ -28,7 +29,7 @@ int main(int argc, char* argv[])
     int no_samples = 30;
     std::string output_path = "output.png";
     bool headless = false;
-    
+
     // Parse command-line arguments
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -46,122 +47,87 @@ int main(int argc, char* argv[])
         }
     }
 
+    MPI_Init(&argc, &argv);
+
+    int world_rank = 0;
+    int world_size = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
     // INICIALIZAR ESCENA
 
-    // dimensiones de la imagen
-    int width;
+    glm::vec3 camera_pos({-2.44, 6.66, 5.87});
+    glm::vec3 camera_rot({0.0, 0.0, 0.0});
+    float camera_focal_length = 30 * 0.001f;   // 30 mm
+    float camera_sensor_size_x = 36 * 0.001f;  // 36 mm
+    float camera_sensor_size_y = 24 * 0.001f;  // 24 mm
 
-    // cámara
-    glm::vec3 camera_pos({-2.44,6.66,5.87});
-    glm::vec3 camera_rot({0.0,0.0,0.0});
-    float camera_focal_length = 30 * 0.001;   // 30 mm
-    float camera_sensor_size_x = 36 * 0.001;  // 36 mm
-    float camera_sensor_size_y = 24 * 0.001;  // 24 mm
-
-    Camera camera(camera_pos, camera_rot, camera_focal_length,camera_sensor_size_x, camera_sensor_size_y);
-    
-    // escena
+    Camera camera(camera_pos, camera_rot, camera_focal_length, camera_sensor_size_x, camera_sensor_size_y);
     Scene scene = Scene(camera);
 
-    // cargar escena de prueba
     SceneLoader::load_from_path(scene, scene_path);
 
-    // agregar luces
     PointLight light{glm::vec3(50.0f), glm::vec3(1.0f, 10.0f, 5.0f)};
     scene.lights.push_back(&light);
 
-    // renderizador
     Renderer renderer(scene, height, no_samples);
-    width = renderer.getWidth();
 
-    // HEADLESS MODE - Render and save without UI
-    if (headless) {
-        bool tiles_left = true;
-        while (tiles_left) {
-            tiles_left = renderer.advance();
-            int total = renderer.getTotalTiles();
-            int remaining = renderer.getRemainingTiles();
-            int progress = total - remaining;
-            int percent = (progress * 100) / total;
-            std::cout << "\rProgress: " << std::setw(3) << percent << "%" << std::flush;
-        }
-        std::cout << "\nRendering complete!" << std::endl;
-        
-        // Save the rendered image
-        stbi_write_png(output_path.c_str(), width, height, 4, renderer.getPixels(), width * sizeof(uint32_t));
-        return 0;
-    }
+    if (world_rank == 0) {
+        std::vector<uint32_t> framebuffer;
+        mpi_scheduler::MasterCallbacks callbacks{};
 
-    // INICIALIZAR GUI
+        SDL_Window* window = nullptr;
+        SDL_Renderer* sdl_renderer = nullptr;
+        SDL_Texture* texture = nullptr;
 
-    SDL_Init(SDL_INIT_VIDEO);
+        if (!headless) {
+            SDL_Init(SDL_INIT_VIDEO);
 
-    SDL_Window* window = SDL_CreateWindow(
-        "Raytracer",
-        width,
-        height,
-        0
-    );
-
-    SDL_Renderer* sdl_renderer = SDL_CreateRenderer(window, NULL);
-
-    // Texture that we can update every frame
-    SDL_Texture* texture = SDL_CreateTexture(
-        sdl_renderer,
-        SDL_PIXELFORMAT_ARGB8888,
-        SDL_TEXTUREACCESS_STREAMING,
-        width,
-        height
-    );
-
-
-    // LOOP DE LA INTERFAZ GRÁFICA
-
-    bool running = true;
-    bool completed = false;
-    while (running) {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-            if (event.type == SDL_EVENT_QUIT)
-                running = false;
-
-        if (!completed) {
-            bool tiles_left = renderer.advance();
-            int total = renderer.getTotalTiles();
-            int remaining = renderer.getRemainingTiles();
-            int progress = total - remaining;
-            int percent = (progress * 100) / total;
-            std::cout << "\rProgress: " << std::setw(3) << percent << "%" << std::flush;
-            completed = !tiles_left;
-            
-            // Actualizar la imagen 
-            SDL_UpdateTexture(
-                texture,
-                NULL,
-                renderer.getPixels(),
-                width * sizeof(uint32_t)
+            int width = renderer.getWidth();
+            window = SDL_CreateWindow("Raytracer", width, height, 0);
+            sdl_renderer = SDL_CreateRenderer(window, NULL);
+            texture = SDL_CreateTexture(
+                sdl_renderer,
+                SDL_PIXELFORMAT_ARGB8888,
+                SDL_TEXTUREACCESS_STREAMING,
+                width,
+                height
             );
-            
-            SDL_RenderClear(sdl_renderer);
-            SDL_RenderTexture(sdl_renderer, texture, NULL, NULL);
-            SDL_RenderPresent(sdl_renderer);
-            
-            // Save image when rendering is completed
-            if (completed) {
-                std::cout << "\nRendering complete!" << std::endl;
-                stbi_write_png(output_path.c_str(), width, height, 4, renderer.getPixels(), width * sizeof(uint32_t));
-            }
+
+            callbacks.on_tile = [&](const std::vector<uint32_t>& fb, int, int) {
+                SDL_UpdateTexture(texture, NULL, fb.data(), width * sizeof(uint32_t));
+                SDL_RenderClear(sdl_renderer);
+                SDL_RenderTexture(sdl_renderer, texture, NULL, NULL);
+                SDL_RenderPresent(sdl_renderer);
+            };
+
+            callbacks.on_idle = [&]() {
+                SDL_Event event;
+                while (SDL_PollEvent(&event)) {
+                    if (event.type == SDL_EVENT_QUIT) {
+                        return false;
+                    }
+                }
+                return true;
+            };
         }
 
-        if (completed)
-            SDL_Delay(50);
+        bool completed = mpi_scheduler::run_master_render(renderer, world_size, framebuffer, callbacks);
+        if (completed) {
+            int width = renderer.getWidth();
+            stbi_write_png(output_path.c_str(), width, height, 4, framebuffer.data(), width * sizeof(uint32_t));
+        }
+
+        if (!headless) {
+            SDL_DestroyTexture(texture);
+            SDL_DestroyRenderer(sdl_renderer);
+            SDL_DestroyWindow(window);
+            SDL_Quit();
+        }
+    } else {
+        mpi_scheduler::run_worker_render(renderer);
     }
 
-    SDL_DestroyTexture(texture);
-    SDL_DestroyRenderer(sdl_renderer);
-    SDL_DestroyWindow(window);
-
-    SDL_Quit();
-
+    MPI_Finalize();
     return 0;
 }

@@ -35,6 +35,21 @@ bool Renderer::advance()
     return true;
 }
 
+void Renderer::render_tile(const Tile& tile, std::vector<uint32_t>& out_pixels)
+{
+    process_tile(tile);
+
+    int tile_width = tile.x_end - tile.x_start;
+    int tile_height = tile.y_end - tile.y_start;
+    out_pixels.resize(tile_width * tile_height);
+
+    for (int y = 0; y < tile_height; ++y) {
+        const uint32_t* src = pixels.data() + (tile.y_start + y) * width + tile.x_start;
+        uint32_t* dst = out_pixels.data() + y * tile_width;
+        std::copy(src, src + tile_width, dst);
+    }
+}
+
 void Renderer::generate_tiles()
 {
     for (int y = 0; y < height; y += TILE_SIZE)
@@ -52,7 +67,7 @@ void Renderer::generate_tiles()
     }
 }
 
-void Renderer::process_tile(Tile& tile)
+void Renderer::process_tile(const Tile& tile)
 {
     for (int y = tile.y_start; y < tile.y_end; y++)
     {

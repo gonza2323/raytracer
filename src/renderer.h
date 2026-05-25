@@ -14,7 +14,11 @@ public:
     
     bool advance();
 
+    void render_tile(const Tile& tile, std::vector<uint32_t>& out_pixels);
+
     int getWidth() { return width; }
+    int getHeight() { return height; }
+    std::vector<Tile> getTiles() const { return tileQueue; }
     uint32_t* getPixels() { return pixels.data(); }
     int getTotalTiles() { return total_tiles; }
     int getRemainingTiles() { return (int)tileQueue.size(); }
@@ -29,7 +33,7 @@ private:
     std::vector<Tile> tileQueue;
 
     void generate_tiles();
-    void process_tile(Tile& tile);
+    void process_tile(const Tile& tile);
     void process_pixel(int x, int y);
     glm::vec3 shoot_ray(Ray& ray, int depth);
     void resolve_surface_data(HitData& hit_data);

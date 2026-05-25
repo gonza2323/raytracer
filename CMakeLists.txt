@@ -8,6 +8,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(raytracer
     src/main.cpp
+    src/mpi/mpi_protocol.cpp
+    src/mpi/mpi_scheduler.cpp
     src/renderer.cpp
     src/camera.cpp
     src/scene.cpp
@@ -25,12 +27,14 @@ add_executable(raytracer
 find_package(SDL3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(fastgltf CONFIG REQUIRED)
+find_package(MPI REQUIRED)
 
 target_link_libraries(raytracer
     PRIVATE
         SDL3::SDL3
         glm::glm
         fastgltf::fastgltf
+        MPI::MPI_CXX
 )
 
 
