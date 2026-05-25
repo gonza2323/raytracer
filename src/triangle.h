@@ -7,13 +7,15 @@
 #include <glm/vec3.hpp>
 #include <glm/vec2.hpp>
 
-struct Vertex {
+struct Vertex
+{
     glm::vec3 pos;
     glm::vec3 normal;
     glm::vec2 uvs[2];
 };
 
-struct Triangle {
+struct Triangle
+{
     Vertex v0, v1, v2;
     int material_index;
 

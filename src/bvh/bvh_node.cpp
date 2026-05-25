@@ -6,40 +6,53 @@
 
 const float BBOX_PADDING = 1e-6f;
 
-BVHNode::~BVHNode() {
+BVHNode::~BVHNode()
+{
     delete left;
     delete right;
 }
 
-bool BVHNode::intersect(const Ray& ray, HitData& hit_data, std::vector<Triangle>& triangles, Interval& ray_t) const {
+bool BVHNode::intersect(const Ray& ray, HitData& hit_data, std::vector<Triangle>& triangles, Interval& ray_t) const
+{
     // Check if ray hits this node's bounding box
-    if (!bbox.hit(ray, ray_t)) {
+    if (!bbox.hit(ray, ray_t))
+    {
         return false;
     }
 
     bool hit = false;
 
-    if (is_leaf()) {
+    if (is_leaf())
+    {
         // Leaf node: check all triangles in this node
-        for (int i = first_triangle; i < first_triangle + triangle_count; i++) {
+        for (int i = first_triangle; i < first_triangle + triangle_count; i++)
+        {
             HitData temp_hit;
-            if (triangles[i].intersect(ray, temp_hit)) {
-                if (temp_hit.t < ray_t.max) {
+            if (triangles[i].intersect(ray, temp_hit))
+            {
+                if (temp_hit.t < ray_t.max)
+                {
                     hit = true;
                     ray_t.max = temp_hit.t;
                     hit_data = temp_hit;
                 }
             }
         }
-    } else {
+    }
+    else
+    {
         // Interior node: recurse into children
-        if (left) {
-            if (left->intersect(ray, hit_data, triangles, ray_t)) {
+        if (left)
+        {
+            if (left->intersect(ray, hit_data, triangles, ray_t))
+            {
                 hit = true;
             }
         }
-        if (right) {
-            if (right->intersect(ray, hit_data, triangles, ray_t)) {
+        if (right)
+        {
+            if (right->intersect(ray, hit_data, triangles, ray_t))
+            {
                 hit = true;
             }
         }
@@ -48,14 +61,17 @@ bool BVHNode::intersect(const Ray& ray, HitData& hit_data, std::vector<Triangle>
     return hit;
 }
 
-BVHNode* BVHNode::build(std::vector<Triangle>& triangles, int start, int end) {
+BVHNode* BVHNode::build(std::vector<Triangle>& triangles, int start, int end)
+{
     BVHNode* node = new BVHNode();
     int triangle_count = end - start;
 
     // Compute bounding box for this range
-    if (triangle_count > 0) {
+    if (triangle_count > 0)
+    {
         BoundingBox bbox = triangles[start].generate_bounding_box();
-        for (int i = start + 1; i < end; i++) {
+        for (int i = start + 1; i < end; i++)
+        {
             bbox = BoundingBox(bbox, triangles[i].generate_bounding_box());
         }
         // Expand bounding box to avoid precision issues at edges
@@ -65,7 +81,8 @@ BVHNode* BVHNode::build(std::vector<Triangle>& triangles, int start, int end) {
     }
 
     // Base case: create leaf node
-    if (triangle_count <= MAX_TRIANGLES_PER_LEAF) {
+    if (triangle_count <= MAX_TRIANGLES_PER_LEAF)
+    {
         node->first_triangle = start;
         node->triangle_count = triangle_count;
         return node;
@@ -83,7 +100,8 @@ BVHNode* BVHNode::build(std::vector<Triangle>& triangles, int start, int end) {
     if (spread.z > spread[axis]) axis = 2;
 
     // Sort triangles along the chosen axis
-    auto cmp = [&](const Triangle& a, const Triangle& b) {
+    auto cmp = [&](const Triangle& a, const Triangle& b)
+    {
         glm::vec3 center_a = (a.v0.pos + a.v1.pos + a.v2.pos) * (1.0f / 3.0f);
         glm::vec3 center_b = (b.v0.pos + b.v1.pos + b.v2.pos) * (1.0f / 3.0f);
         return center_a[axis] < center_b[axis];

@@ -43,7 +43,8 @@ void Renderer::render_tile(const Tile& tile, std::vector<uint32_t>& out_pixels)
     int tile_height = tile.y_end - tile.y_start;
     out_pixels.resize(tile_width * tile_height);
 
-    for (int y = 0; y < tile_height; ++y) {
+    for (int y = 0; y < tile_height; ++y)
+    {
         const uint32_t* src = pixels.data() + (tile.y_start + y) * width + tile.x_start;
         uint32_t* dst = out_pixels.data() + y * tile_width;
         std::copy(src, src + tile_width, dst);
@@ -81,8 +82,9 @@ void Renderer::process_tile(const Tile& tile)
 void Renderer::process_pixel(int x, int y)
 {
     glm::vec3 light(0.0f);
-    
-    for (int i = 0; i < no_samples; i++) {
+
+    for (int i = 0; i < no_samples; i++)
+    {
         Ray ray = scene.camera.generateRayForPixelAA(x, y, width, height);
         light += shoot_ray(ray, 8);
     }
@@ -98,7 +100,7 @@ glm::vec3 Renderer::shoot_ray(Ray& ray, int depth)
 
     HitData hit_data;
 
-    // si no hay hit, retornamos color de fondo
+    // No hit: return background color.
     if (!scene.intersect(ray, hit_data))
         return glm::vec3(0.0f);
 
@@ -106,9 +108,9 @@ glm::vec3 Renderer::shoot_ray(Ray& ray, int depth)
 
     glm::vec3 bounce_direction = random_on_hemisphere(hit_data.shading_normal);
     Ray scattered_ray(hit_data.pos + hit_data.normal * 0.001f, bounce_direction);
-    
+
     glm::vec3 direct_lighting = calculate_direct_lighting(hit_data);
-    
+
     float cosine_factor = std::max(glm::dot(bounce_direction, hit_data.shading_normal), 0.0f);
 
     glm::vec3 indirect_light = shoot_ray(scattered_ray, depth - 1);
@@ -117,21 +119,26 @@ glm::vec3 Renderer::shoot_ray(Ray& ray, int depth)
     return (direct_lighting + indirect_lighting) * hit_data.color;
 }
 
-void Renderer::resolve_surface_data(HitData& hit_data) {
+void Renderer::resolve_surface_data(HitData& hit_data)
+{
     const Material& mat = scene.materials[hit_data.material_index];
-    
+
     // Base Color
     hit_data.color = mat.base_color_factor;
-    if (mat.base_color_texture.texture_index != -1) {
-        glm::vec3 tex_color = sample_texture(mat.base_color_texture.texture_index, hit_data.uvs[mat.base_color_texture.uv_index]);
+    if (mat.base_color_texture.texture_index != -1)
+    {
+        glm::vec3 tex_color = sample_texture(mat.base_color_texture.texture_index,
+                                             hit_data.uvs[mat.base_color_texture.uv_index]);
         hit_data.color *= toLinear(tex_color);
     }
 
     // Roughness & Metallic
     hit_data.roughness = mat.roughness_factor;
     hit_data.metallic = mat.metallic_factor;
-    if (mat.metallic_roughness_texture.texture_index != -1) {
-        glm::vec3 tex_rm = sample_texture(mat.metallic_roughness_texture.texture_index, hit_data.uvs[mat.metallic_roughness_texture.uv_index]);
+    if (mat.metallic_roughness_texture.texture_index != -1)
+    {
+        glm::vec3 tex_rm = sample_texture(mat.metallic_roughness_texture.texture_index,
+                                          hit_data.uvs[mat.metallic_roughness_texture.uv_index]);
         // Green channel: roughness, Blue channel: metallic
         hit_data.roughness *= tex_rm.g;
         hit_data.metallic *= tex_rm.b;
@@ -139,16 +146,19 @@ void Renderer::resolve_surface_data(HitData& hit_data) {
 
     // Normal Map
     hit_data.normal_map_normal = glm::vec3(0.0f, 0.0f, 1.0f); // Default tangent-space normal
-    if (mat.normal_texture.texture_index != -1) {
+    if (mat.normal_texture.texture_index != -1)
+    {
         glm::vec3 tex_n = sample_texture(mat.normal_texture.texture_index, hit_data.uvs[mat.normal_texture.uv_index]);
         hit_data.normal_map_normal = glm::normalize(tex_n * 2.0f - 1.0f);
     }
 }
 
-glm::vec3 Renderer::calculate_direct_lighting(HitData& hit_data) {
+glm::vec3 Renderer::calculate_direct_lighting(HitData& hit_data)
+{
     glm::vec3 total_light(0.0f);
 
-    for (Light* light : scene.lights) {
+    for (Light* light : scene.lights)
+    {
         glm::vec3 light_dir = light->get_direction(hit_data.pos);
         glm::vec3 light_dir_normalized = glm::normalize(light_dir);
 
@@ -164,16 +174,19 @@ glm::vec3 Renderer::calculate_direct_lighting(HitData& hit_data) {
         bool is_visible = false;
 
         // For PointLight, only check occlusion up to the light distance
-        if (PointLight* point_light = dynamic_cast<PointLight*>(light)) {
+        if (PointLight* point_light = dynamic_cast<PointLight*>(light))
+        {
             float distance_to_light = glm::length(light_dir);
             is_visible = !scene.is_occluded(shadow_ray, distance_to_light);
         }
         // For DirectionalLight, check occlusion to infinity
-        else if (dynamic_cast<DirectionalLight*>(light)) {
+        else if (dynamic_cast<DirectionalLight*>(light))
+        {
             is_visible = !scene.is_occluded(shadow_ray, infinity);
         }
 
-        if (is_visible) {
+        if (is_visible)
+        {
             glm::vec3 light_intensity = light->get_intensity_at(hit_data.pos);
             total_light += light_intensity * cosine_factor;
         }
@@ -182,11 +195,13 @@ glm::vec3 Renderer::calculate_direct_lighting(HitData& hit_data) {
     return total_light;
 }
 
-glm::vec3 Renderer::sample_texture(int texture_index, glm::vec2 uv) {
-    if (texture_index < 0 || texture_index >= static_cast<int>(scene.textures.size())) {
+glm::vec3 Renderer::sample_texture(int texture_index, glm::vec2 uv)
+{
+    if (texture_index < 0 || texture_index >= static_cast<int>(scene.textures.size()))
+    {
         return glm::vec3(1.0f);
     }
-    
+
     const Image& img = scene.textures[texture_index];
     if (img.data.empty()) return glm::vec3(1.0f);
 
@@ -196,7 +211,7 @@ glm::vec3 Renderer::sample_texture(int texture_index, glm::vec2 uv) {
 
     int x = static_cast<int>(u * img.width);
     int y = static_cast<int>(v * img.height);
-    
+
     // Clamp to avoid out of bounds due to floating point precision
     x = std::clamp(x, 0, img.width - 1);
     y = std::clamp(y, 0, img.height - 1);

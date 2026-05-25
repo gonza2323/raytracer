@@ -2,40 +2,51 @@
 
 #include "constants.h"
 
-class Interval {
-  public:
+class Interval
+{
+public:
     double min, max;
 
-    Interval() : min(+infinity), max(-infinity) {}
+    Interval() : min(+infinity), max(-infinity)
+    {
+    }
 
-    Interval(double min, double max) : min(min), max(max) {}
+    Interval(double min, double max) : min(min), max(max)
+    {
+    }
 
-    Interval(const Interval& a, const Interval& b) {
+    Interval(const Interval& a, const Interval& b)
+    {
         // Create the interval tightly enclosing the two input intervals.
         min = a.min <= b.min ? a.min : b.min;
         max = a.max >= b.max ? a.max : b.max;
     }
 
-    double size() const {
+    double size() const
+    {
         return max - min;
     }
 
-    bool contains(double x) const {
+    bool contains(double x) const
+    {
         return min <= x && x <= max;
     }
 
-    bool surrounds(double x) const {
+    bool surrounds(double x) const
+    {
         return min < x && x < max;
     }
 
-    double clamp(double x) const {
+    double clamp(double x) const
+    {
         if (x < min) return min;
         if (x > max) return max;
         return x;
     }
 
-    Interval expand(double delta) const {
-        auto padding = delta/2;
+    Interval expand(double delta) const
+    {
+        auto padding = delta / 2;
         return Interval(min - padding, max + padding);
     }
 

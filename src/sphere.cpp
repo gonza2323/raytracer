@@ -1,7 +1,8 @@
 #include "sphere.h"
 #include <glm/ext/quaternion_geometric.hpp>
 
-bool Sphere::intersect(Ray ray, HitData& hit_data) {
+bool Sphere::intersect(Ray ray, HitData& hit_data)
+{
     const float EPS = 1e-4f;
 
     glm::vec3 oc = ray.origin - pos;
@@ -26,7 +27,8 @@ bool Sphere::intersect(Ray ray, HitData& hit_data) {
     float t = t0;
 
     // if closest is behind, try the far one (handles being inside sphere too)
-    if (t < EPS) {
+    if (t < EPS)
+    {
         t = t1;
         if (t < EPS) return false;
     }

@@ -8,10 +8,11 @@
 #include <cstdint>
 #include <glm/ext/vector_int3.hpp>
 
-class Renderer {
+class Renderer
+{
 public:
     Renderer(Scene& scene, int width, int no_samples);
-    
+
     bool advance();
 
     void render_tile(const Tile& tile, std::vector<uint32_t>& out_pixels);
@@ -22,10 +23,10 @@ public:
     uint32_t* getPixels() { return pixels.data(); }
     int getTotalTiles() { return total_tiles; }
     int getRemainingTiles() { return (int)tileQueue.size(); }
-    
+
 private:
     Scene& scene;
-    
+
     int TILE_SIZE = 64;
     int width, height, no_samples;
     int total_tiles = 0;

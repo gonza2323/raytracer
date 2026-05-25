@@ -10,12 +10,14 @@
 #include "triangle.h"
 #include "bvh/bvh_node.h"
 
-struct Image {
+struct Image
+{
     int width, height, channels;
     std::vector<unsigned char> data;
 };
 
-struct Scene {
+struct Scene
+{
     Camera camera;
     std::vector<Triangle> triangles;
     std::vector<Light*> lights;
@@ -24,9 +26,12 @@ struct Scene {
     BVHNode* bvh_root = nullptr;
 
     Scene(Camera camera)
-        :camera(camera) { }
+        : camera(camera)
+    {
+    }
 
-    ~Scene() {
+    ~Scene()
+    {
         delete bvh_root;
     }
 

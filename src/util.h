@@ -32,18 +32,17 @@ inline glm::vec3 random_unit_vector()
 {
     while (true)
     {
-        // Generamos un punto aleatorio en un cubo de -1 a 1
+        // Pick a random point in the unit cube and keep those inside the unit sphere.
         auto p = random_vector(-1, 1);
-        auto lensq = glm::length(p) * glm::length(p); // longitud al cuadrado para ahorrar la raíz cuadrada inicial
+        auto lensq = glm::length(p) * glm::length(p);
 
-        // El punto debe estar dentro de la esfera unitaria (lensq <= 1)
-        // y no ser demasiado pequeño (para evitar errores de división por cero)
         if (lensq > 1e-160 && lensq <= 1.0)
-            return glm::normalize(p); // Normalizamos para que la longitud sea exactamente 1
+            return glm::normalize(p);
     }
 }
 
-inline glm::vec3 random_on_hemisphere(glm::vec3& normal) {
+inline glm::vec3 random_on_hemisphere(glm::vec3& normal)
+{
     glm::vec3 on_unit_sphere = random_unit_vector();
     if (dot(on_unit_sphere, normal) > 0.0) // In the same hemisphere as the normal
         return on_unit_sphere;

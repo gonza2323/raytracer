@@ -96,3 +96,69 @@ cmake --build build/debug
 ```
 
 o con "release" respectivamente.
+
+## Render distribuido con MPI
+
+El renderizador ahora funciona en modo distribuido usando MPI. El proceso con `rank 0` actúa como **master** (orquestador y compositor), mientras que los procesos con `rank > 0` actúan como **workers** (renderizan tiles). El reparto de trabajo es **dinámico y dirigido por los workers**: cada worker solicita un tile cuando queda libre, lo renderiza y envía el resultado al master.
+
+### Flujo de ejecución paralelo
+
+1. Inicialización de MPI.
+2. Se detecta el rol según el `rank`:
+   - `rank 0`: master.
+   - `rank > 0`: worker.
+3. El master prepara la cola de tiles y el framebuffer final.
+4. Cada worker:
+   - solicita trabajo,
+   - recibe un tile,
+   - renderiza ese tile con el mismo código de shading ya existente,
+   - envía el resultado al master.
+5. El master recibe tiles, los compone en el framebuffer y actualiza la visualización (si no es headless).
+6. Cuando no quedan tiles, el master termina a los workers y escribe la imagen final.
+
+### Lógica de scheduling
+
+El scheduling es dinámico y **worker-driven**. Esto evita el particionado estático y reduce el desbalance cuando algunos tiles son más costosos que otros. El master solo mantiene la cola global y responde a las solicitudes de trabajo; los workers nunca poseen estado de scheduling.
+
+## Pipeline de renderizado (alto nivel)
+
+1. Carga de escena (`.gltf/.glb`) con geometría, materiales y texturas.
+2. Construcción del BVH para intersecciones eficientes.
+3. Generación de tiles a partir del tamaño de imagen.
+4. Distribución dinámica de tiles a través de MPI.
+5. Renderizado de tiles en workers.
+6. Composición de tiles en el framebuffer del master.
+7. Escritura del PNG final.
+
+## Escenas
+
+Una escena contiene geometría (triángulos), materiales, texturas y luces. Se carga desde glTF utilizando `fastgltf` y `stb_image`:
+
+- `SceneLoader::load_from_path` llena `Scene::textures`, `Scene::materials`, `Scene::triangles`.
+- Luego se construye el BVH (`Scene::build_bvh`) para acelerar intersecciones.
+
+## Arquitectura (resumen)
+
+- `src/renderer.*`: lógica de renderizado y shading. No contiene MPI ni SDL.
+- `src/mpi/mpi_protocol.*`: mensajes MPI mínimos (request, assignment, result, terminate).
+- `src/mpi/mpi_scheduler.*`: orquestación, scheduling y composición en el master.
+- `src/main.cpp`: inicialización, carga de escena y selección de rol.
+- SDL solo se usa en `rank 0` para visualización progresiva.
+
+## Ejecución con MPI
+
+### Headless (recomendado para batch)
+
+```bash
+mpirun -n 4 ./build/debug/raytracer --headless -s assets/Test.glb -h 520 -n 30 -o output.png
+```
+
+### Interactivo (ventana SDL en `rank 0`)
+
+```bash
+mpirun -n 4 ./build/debug/raytracer -s assets/Test.glb -h 520 -n 30 -o output.png
+```
+
+## Consistencia del render
+
+El resultado visual es equivalente al modo secuencial original: el shading y la lógica de intersección no se modificaron. La paralelización solo cambia la distribución de tiles entre procesos. Si se observa alguna mínima diferencia, suele deberse al orden de ejecución o al generador aleatorio utilizado por muestreo.

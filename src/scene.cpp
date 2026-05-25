@@ -15,8 +15,10 @@
 #include <glm/geometric.hpp>
 #include <iostream>
 
-bool Scene::intersect(Ray ray, HitData& hit_data) {
-    if (!bvh_root) {
+bool Scene::intersect(Ray ray, HitData& hit_data)
+{
+    if (!bvh_root)
+    {
         return false;
     }
 
@@ -25,8 +27,10 @@ bool Scene::intersect(Ray ray, HitData& hit_data) {
     return bvh_root->intersect(ray, hit_data, triangles, ray_t);
 }
 
-bool Scene::is_occluded(Ray ray, float max_t) {
-    if (!bvh_root) {
+bool Scene::is_occluded(Ray ray, float max_t)
+{
+    if (!bvh_root)
+    {
         return false;
     }
 
@@ -35,8 +39,10 @@ bool Scene::is_occluded(Ray ray, float max_t) {
     return bvh_root->intersect(ray, hit_data, triangles, ray_t);
 }
 
-void Scene::build_bvh() {
-    if (triangles.empty()) {
+void Scene::build_bvh()
+{
+    if (triangles.empty())
+    {
         return;
     }
 

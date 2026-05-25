@@ -5,12 +5,13 @@
 #include <glm/vec2.hpp>
 
 
-struct HitData {
+struct HitData
+{
     glm::vec3 pos;
-    glm::vec3 normal;         // Geometric normal (for offset/shadowing)
+    glm::vec3 normal; // Geometric normal (for offset/shadowing)
     glm::vec3 shading_normal; // Interpolated vertex normal
-    glm::vec2 uvs[2];         // Interpolated UV coordinates
-    
+    glm::vec2 uvs[2]; // Interpolated UV coordinates
+
     // Resolved surface data
     glm::vec3 color;
     float roughness;

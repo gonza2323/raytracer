@@ -22,7 +22,7 @@
 int main(int argc, char* argv[])
 {
     // PARSE PROGRAM ARGUMENTS
-    
+
     // Default values
     int height = 520;
     std::string scene_path = "assets/Test.glb";
@@ -31,18 +31,28 @@ int main(int argc, char* argv[])
     bool headless = false;
 
     // Parse command-line arguments
-    for (int i = 1; i < argc; ++i) {
+    for (int i = 1; i < argc; ++i)
+    {
         std::string arg = argv[i];
-        
-        if ((arg == "-h" || arg == "--height") && i + 1 < argc) {
+
+        if ((arg == "-h" || arg == "--height") && i + 1 < argc)
+        {
             height = std::stoi(argv[++i]);
-        } else if ((arg == "-s" || arg == "--scene") && i + 1 < argc) {
+        }
+        else if ((arg == "-s" || arg == "--scene") && i + 1 < argc)
+        {
             scene_path = argv[++i];
-        } else if ((arg == "-n" || arg == "--samples") && i + 1 < argc) {
+        }
+        else if ((arg == "-n" || arg == "--samples") && i + 1 < argc)
+        {
             no_samples = std::stoi(argv[++i]);
-        } else if ((arg == "-o" || arg == "--output") && i + 1 < argc) {
+        }
+        else if ((arg == "-o" || arg == "--output") && i + 1 < argc)
+        {
             output_path = argv[++i];
-        } else if (arg == "--headless") {
+        }
+        else if (arg == "--headless")
+        {
             headless = true;
         }
     }
@@ -54,13 +64,13 @@ int main(int argc, char* argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-    // INICIALIZAR ESCENA
+    // Initialize scene
 
     glm::vec3 camera_pos({-2.44, 6.66, 5.87});
     glm::vec3 camera_rot({0.0, 0.0, 0.0});
-    float camera_focal_length = 30 * 0.001f;   // 30 mm
-    float camera_sensor_size_x = 36 * 0.001f;  // 36 mm
-    float camera_sensor_size_y = 24 * 0.001f;  // 24 mm
+    float camera_focal_length = 30 * 0.001f; // 30 mm
+    float camera_sensor_size_x = 36 * 0.001f; // 36 mm
+    float camera_sensor_size_y = 24 * 0.001f; // 24 mm
 
     Camera camera(camera_pos, camera_rot, camera_focal_length, camera_sensor_size_x, camera_sensor_size_y);
     Scene scene = Scene(camera);
@@ -72,7 +82,8 @@ int main(int argc, char* argv[])
 
     Renderer renderer(scene, height, no_samples);
 
-    if (world_rank == 0) {
+    if (world_rank == 0)
+    {
         std::vector<uint32_t> framebuffer;
         mpi_scheduler::MasterCallbacks callbacks{};
 
@@ -80,7 +91,8 @@ int main(int argc, char* argv[])
         SDL_Renderer* sdl_renderer = nullptr;
         SDL_Texture* texture = nullptr;
 
-        if (!headless) {
+        if (!headless)
+        {
             SDL_Init(SDL_INIT_VIDEO);
 
             int width = renderer.getWidth();
@@ -94,17 +106,21 @@ int main(int argc, char* argv[])
                 height
             );
 
-            callbacks.on_tile = [&](const std::vector<uint32_t>& fb, int, int) {
+            callbacks.on_tile = [&](const std::vector<uint32_t>& fb, int, int)
+            {
                 SDL_UpdateTexture(texture, NULL, fb.data(), width * sizeof(uint32_t));
                 SDL_RenderClear(sdl_renderer);
                 SDL_RenderTexture(sdl_renderer, texture, NULL, NULL);
                 SDL_RenderPresent(sdl_renderer);
             };
 
-            callbacks.on_idle = [&]() {
+            callbacks.on_idle = [&]()
+            {
                 SDL_Event event;
-                while (SDL_PollEvent(&event)) {
-                    if (event.type == SDL_EVENT_QUIT) {
+                while (SDL_PollEvent(&event))
+                {
+                    if (event.type == SDL_EVENT_QUIT)
+                    {
                         return false;
                     }
                 }
@@ -113,18 +129,22 @@ int main(int argc, char* argv[])
         }
 
         bool completed = mpi_scheduler::run_master_render(renderer, world_size, framebuffer, callbacks);
-        if (completed) {
+        if (completed)
+        {
             int width = renderer.getWidth();
             stbi_write_png(output_path.c_str(), width, height, 4, framebuffer.data(), width * sizeof(uint32_t));
         }
 
-        if (!headless) {
+        if (!headless)
+        {
             SDL_DestroyTexture(texture);
             SDL_DestroyRenderer(sdl_renderer);
             SDL_DestroyWindow(window);
             SDL_Quit();
         }
-    } else {
+    }
+    else
+    {
         mpi_scheduler::run_worker_render(renderer);
     }
 

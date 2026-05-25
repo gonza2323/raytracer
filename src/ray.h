@@ -3,7 +3,8 @@
 #include <glm/ext/vector_float3.hpp>
 
 
-struct Ray {
+struct Ray
+{
     glm::vec3 origin;
     glm::vec3 dir;
 };
