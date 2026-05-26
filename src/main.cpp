@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
 
     SceneLoader::load_from_path(scene, scene_path);
 
-    DirectionalLight light{glm::vec3(50.0f), glm::vec3(-1.0f, -10.0f, 1.0f)};
+    DirectionalLight light{glm::vec3(500.0f), glm::vec3(-1.0f, -10.0f, 1.0f)};
     scene.lights.push_back(&light);
 
     Renderer renderer(scene, height, no_samples);

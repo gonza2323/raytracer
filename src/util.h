@@ -1,4 +1,7 @@
 #pragma once
+#include <fastgltf/math.hpp>
+#include <glm/ext/scalar_constants.hpp>
+#include <numbers>
 #include <random>
 #include <glm/vec3.hpp>
 #include <glm/ext/quaternion_geometric.hpp>
@@ -48,4 +51,48 @@ inline glm::vec3 random_on_hemisphere(glm::vec3& normal)
         return on_unit_sphere;
     else
         return -on_unit_sphere;
+}
+
+inline glm::vec3 random_cosine_direction()
+{
+    float r1 = random_double();
+    float r2 = random_double();
+
+    float phi = 2.0f * std::numbers::pi_v<float> * r1;
+
+    float x = cos(phi) * sqrt(r2);
+    float y = sin(phi) * sqrt(r2);
+    float z = sqrt(1.0f - r2);
+
+    return glm::vec3(x, y, z);
+}
+
+inline glm::vec3 random_cosine_weighted_direction(
+    const glm::vec3& normal)
+{
+    glm::vec3 local = random_cosine_direction();
+
+    glm::vec3 tangent;
+
+    if (fabs(normal.x) > 0.9f)
+    {
+        tangent = glm::normalize(
+            glm::cross(normal, glm::vec3(0,1,0))
+        );
+    }
+    else
+    {
+        tangent = glm::normalize(
+            glm::cross(normal, glm::vec3(1,0,0))
+        );
+    }
+
+    glm::vec3 bitangent =
+        glm::cross(normal, tangent);
+
+    return glm::normalize(
+        tangent   * local.x +
+        bitangent * local.y +
+        normal    * local.z
+    );
 }

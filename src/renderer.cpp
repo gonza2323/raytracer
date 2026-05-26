@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <glm/ext/quaternion_geometric.hpp>
 #include <glm/ext/vector_float3.hpp>
+#include <numbers>
 
 #include "util.h"
 #include "constants.h"
@@ -86,7 +87,7 @@ void Renderer::process_pixel(int x, int y)
     for (int i = 0; i < no_samples; i++)
     {
         Ray ray = scene.camera.generateRayForPixelAA(x, y, width, height);
-        light += shoot_ray(ray, 8);
+        light += shoot_ray(ray, 4);
     }
 
     light /= no_samples;
@@ -94,29 +95,53 @@ void Renderer::process_pixel(int x, int y)
     write_pixel(x, y, pixel);
 }
 
-glm::vec3 Renderer::shoot_ray(Ray& ray, int depth)
+glm::vec3 Renderer::shoot_ray(
+    Ray& ray,
+    int depth)
 {
-    if (depth <= 0) return glm::vec3(0.0f);
+    if (depth <= 0)
+        return glm::vec3(0.0f);
 
     HitData hit_data;
 
-    // No hit: return background color.
+    // Environment
     if (!scene.intersect(ray, hit_data))
+    {
         return glm::vec3(0.0f);
+    }
 
     resolve_surface_data(hit_data);
 
-    glm::vec3 bounce_direction = random_on_hemisphere(hit_data.shading_normal);
-    Ray scattered_ray(hit_data.pos + hit_data.normal * 0.001f, bounce_direction);
+    glm::vec3 albedo =
+        hit_data.color;
 
-    glm::vec3 direct_lighting = calculate_direct_lighting(hit_data);
+    // Direct lighting
+    glm::vec3 direct =
+        calculate_direct_lighting(hit_data)
+        * albedo;
 
-    float cosine_factor = std::max(glm::dot(bounce_direction, hit_data.shading_normal), 0.0f);
+    // Cosine-weighted diffuse bounce
+    glm::vec3 bounce_direction =
+        random_cosine_weighted_direction(
+            hit_data.shading_normal
+        );
 
-    glm::vec3 indirect_light = shoot_ray(scattered_ray, depth - 1);
-    glm::vec3 indirect_lighting = indirect_light * cosine_factor;
+    Ray scattered_ray(
+        hit_data.pos +
+        hit_data.normal * 0.001f,
+        bounce_direction
+    );
 
-    return (direct_lighting + indirect_lighting) * hit_data.color;
+    glm::vec3 incoming_indirect =
+        shoot_ray(scattered_ray, depth - 1);
+
+    // Cosine + PDF + BRDF cancel:
+    // indirect = incoming * albedo
+
+    glm::vec3 indirect =
+        incoming_indirect * albedo;
+
+    return direct + indirect;
 }
 
 void Renderer::resolve_surface_data(HitData& hit_data)
@@ -153,43 +178,71 @@ void Renderer::resolve_surface_data(HitData& hit_data)
     }
 }
 
-glm::vec3 Renderer::calculate_direct_lighting(HitData& hit_data)
+glm::vec3 Renderer::calculate_direct_lighting(
+    HitData& hit_data)
 {
     glm::vec3 total_light(0.0f);
 
     for (Light* light : scene.lights)
     {
-        glm::vec3 light_dir = light->get_direction(hit_data.pos);
-        glm::vec3 light_dir_normalized = glm::normalize(light_dir);
+        glm::vec3 light_dir =
+            light->get_direction(hit_data.pos);
 
-        float cosine_factor = std::max(glm::dot(-light_dir_normalized, hit_data.shading_normal), 0.0f);
+        glm::vec3 L =
+            glm::normalize(-light_dir);
 
-        if (cosine_factor <= 0)
+        float NdotL =
+            glm::max(
+                glm::dot(
+                    hit_data.shading_normal,
+                    L
+                ),
+                0.0f
+            );
+
+        if (NdotL <= 0.0f)
             continue;
 
-        // Create shadow ray from hit point towards the light
-        Ray shadow_ray{hit_data.pos + hit_data.normal * 0.001f, -light_dir};
+        Ray shadow_ray(
+            hit_data.pos +
+            hit_data.normal * 0.001f,
+            L
+        );
 
-        // Check if light is visible
-        bool is_visible = false;
+        bool visible = false;
 
-        // For PointLight, only check occlusion up to the light distance
-        if (PointLight* point_light = dynamic_cast<PointLight*>(light))
+        if (PointLight* point_light =
+            dynamic_cast<PointLight*>(light))
         {
-            float distance_to_light = glm::length(light_dir);
-            is_visible = !scene.is_occluded(shadow_ray, distance_to_light);
+            float dist =
+                glm::length(light_dir);
+
+            visible =
+                !scene.is_occluded(
+                    shadow_ray,
+                    dist
+                );
         }
-        // For DirectionalLight, check occlusion to infinity
-        else if (dynamic_cast<DirectionalLight*>(light))
+        else
         {
-            is_visible = !scene.is_occluded(shadow_ray, infinity);
+            visible =
+                !scene.is_occluded(
+                    shadow_ray,
+                    infinity
+                );
         }
 
-        if (is_visible)
-        {
-            glm::vec3 light_intensity = light->get_intensity_at(hit_data.pos);
-            total_light += light_intensity * cosine_factor;
-        }
+        if (!visible)
+            continue;
+
+        glm::vec3 Li =
+            light->get_intensity_at(hit_data.pos);
+
+        // Lambertian BRDF:
+        // albedo / PI
+
+        total_light +=
+            Li * NdotL / std::numbers::pi_v<float>;
     }
 
     return total_light;
