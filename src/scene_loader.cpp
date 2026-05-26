@@ -5,9 +5,127 @@
 #include <fastgltf/types.hpp>
 #include <fastgltf/glm_element_traits.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <filesystem>
 #include <stb_image.h>
+
+// Convert quaternion to Euler angles (pitch, yaw, roll in radians)
+glm::vec3 quaternion_to_euler(const glm::quat& q)
+{
+    glm::vec3 euler = glm::eulerAngles(q);
+    // Reorder from glm's (pitch, yaw, roll) to our convention if needed
+    // glm returns (pitch, yaw, roll) which matches our rot order
+    return euler;
+}
+
+void SceneLoader::load_camera(Scene& scene, const fastgltf::Asset& asset)
+{
+    // Default camera: looking down -Z from (0, 0, 10)
+    glm::vec3 default_pos(0.0f, 0.0f, 10.0f);
+    glm::vec3 default_rot(0.0f, 0.0f, 0.0f); // No rotation
+    float default_focal_length = 30.0f * 0.001f; // 30 mm
+    float default_sensor_x = 36.0f * 0.001f; // 36 mm (standard 35mm width)
+    float default_sensor_y = 24.0f * 0.001f; // 24 mm (standard 35mm height)
+
+    // If no cameras in the scene, use default
+    if (asset.cameras.empty())
+    {
+        std::cout << "No camera in glTF file, using default camera\n";
+        scene.camera = Camera(default_pos, default_rot, default_focal_length, default_sensor_x, default_sensor_y);
+        return;
+    }
+
+    // Use the first camera
+    const auto& gltf_camera = asset.cameras[0];
+    glm::vec3 cam_pos = default_pos;
+    glm::vec3 cam_rot = default_rot;
+    float focal_length = default_focal_length;
+    float sensor_x = default_sensor_x;
+    float sensor_y = default_sensor_y;
+
+    // Find the node that references this camera
+    for (size_t node_idx = 0; node_idx < asset.nodes.size(); ++node_idx)
+    {
+        const auto& node = asset.nodes[node_idx];
+        if (!node.cameraIndex.has_value() || *node.cameraIndex != 0)
+            continue;
+
+        // Found the node with the camera
+        // Get the transform matrix (can be either TRS or matrix)
+        glm::mat4 transform = glm::identity<glm::mat4>();
+
+        if (std::holds_alternative<fastgltf::TRS>(node.transform))
+        {
+            const auto& trs = std::get<fastgltf::TRS>(node.transform);
+            
+            // Build the transformation matrix from TRS
+            glm::vec3 translation(trs.translation[0], trs.translation[1], trs.translation[2]);
+            glm::quat rotation(trs.rotation[3], trs.rotation[0], trs.rotation[1], trs.rotation[2]); // w, x, y, z
+            glm::vec3 scale(trs.scale[0], trs.scale[1], trs.scale[2]);
+            
+            // Build the transformation: T * R * S
+            transform = glm::translate(glm::identity<glm::mat4>(), translation);
+            transform *= glm::mat4_cast(rotation);
+            transform *= glm::scale(glm::identity<glm::mat4>(), scale);
+            
+            cam_rot = quaternion_to_euler(rotation);
+        }
+        else if (std::holds_alternative<fastgltf::math::mat<float, 4, 4>>(node.transform))
+        {
+            const auto& mat = std::get<fastgltf::math::mat<float, 4, 4>>(node.transform);
+            transform = glm::make_mat4(&mat[0][0]);
+            
+            // Extract rotation as quaternion from the matrix, then convert to Euler angles
+            glm::quat rotation_quat = glm::quat_cast(glm::mat3(transform));
+            cam_rot = quaternion_to_euler(rotation_quat);
+        }
+
+        // Extract position (translation)
+        cam_pos = glm::vec3(transform[3]);
+
+        break;
+    }
+
+    // Convert camera parameters
+    // glTF cameras store yfov (vertical field of view in radians)
+    if (std::holds_alternative<fastgltf::Camera::Perspective>(gltf_camera.camera))
+    {
+        const auto& persp = std::get<fastgltf::Camera::Perspective>(gltf_camera.camera);
+
+        // Standard 35mm sensor dimensions
+        sensor_y = 24.0f * 0.001f; // 24 mm
+
+        // Calculate focal length from vertical FOV
+        // yfov = 2 * atan(sensor_height / (2 * focal_length))
+        // focal_length = sensor_height / (2 * tan(yfov / 2))
+        focal_length = sensor_y / (2.0f * std::tan(persp.yfov / 2.0f));
+
+        // Calculate sensor width from aspect ratio
+        if (persp.aspectRatio.has_value())
+        {
+            sensor_x = sensor_y * *persp.aspectRatio;
+        }
+        else
+        {
+            sensor_x = sensor_y * 1.5f; // Assume 3:2 ratio if not specified (35mm aspect)
+        }
+
+        std::cout << "Loaded camera from glTF\n";
+        std::cout << "  Position: (" << cam_pos.x << ", " << cam_pos.y << ", " << cam_pos.z << ")\n";
+        std::cout << "  Rotation (radians): (" << cam_rot.x << ", " << cam_rot.y << ", " << cam_rot.z << ")\n";
+        std::cout << "  Focal length: " << focal_length * 1000.0f << " mm\n";
+        std::cout << "  Sensor size: " << sensor_x * 1000.0f << "x" << sensor_y * 1000.0f << " mm\n";
+    }
+    else if (std::holds_alternative<fastgltf::Camera::Orthographic>(gltf_camera.camera))
+    {
+        // Orthographic cameras are not commonly used for ray tracing, use default
+        std::cout << "Orthographic camera not supported, using default perspective\n";
+    }
+
+    scene.camera = Camera(cam_pos, cam_rot, focal_length, sensor_x, sensor_y);
+}
 
 bool SceneLoader::load_from_path(Scene& scene, const std::string& file_path)
 {
@@ -34,6 +152,9 @@ bool SceneLoader::load_from_path(Scene& scene, const std::string& file_path)
     }
 
     fastgltf::Asset asset = std::move(assetResult.get());
+
+    // 0. Load camera
+    load_camera(scene, asset);
 
     // 1. Load textures
     load_textures(scene, asset, path.parent_path());
