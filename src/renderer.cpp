@@ -227,8 +227,8 @@ glm::vec3 Renderer::sample_texture(int texture_index, glm::vec2 uv)
 void Renderer::write_pixel(int x, int y, glm::ivec3& pixel)
 {
     pixels[y * width + x] =
-        (255 << 24) | // alpha channel
-        (pixel.r << 16) |
+        (255 << 24) |
+        (pixel.b << 16) |
         (pixel.g << 8) |
-        pixel.b;
+        pixel.r;
 }

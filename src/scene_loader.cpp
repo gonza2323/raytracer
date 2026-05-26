@@ -130,7 +130,7 @@ void SceneLoader::load_camera(Scene& scene, const fastgltf::Asset& asset)
 bool SceneLoader::load_from_path(Scene& scene, const std::string& file_path)
 {
     std::filesystem::path path = file_path;
-    fastgltf::Parser parser;
+    fastgltf::Parser parser(fastgltf::Extensions::KHR_lights_punctual);
 
     auto data = fastgltf::GltfDataBuffer::FromPath(path);
     if (data.error() != fastgltf::Error::None)
