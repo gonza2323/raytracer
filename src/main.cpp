@@ -1,3 +1,4 @@
+#include <SDL3/SDL_pixels.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
@@ -66,8 +67,8 @@ int main(int argc, char* argv[])
     // cargar escena de prueba
     SceneLoader::load_from_path(scene, scene_path);
 
-    // agregar luces
-    PointLight light{glm::vec3(50.0f), glm::vec3(1.0f, 10.0f, 5.0f)};
+    // agregar luz por defecto
+    DirectionalLight light{glm::vec3(500.0f), glm::vec3(-1.0f, -10.0f, 1.0f)};
     scene.lights.push_back(&light);
 
     // renderizador
@@ -108,7 +109,7 @@ int main(int argc, char* argv[])
     // Texture that we can update every frame
     SDL_Texture* texture = SDL_CreateTexture(
         sdl_renderer,
-        SDL_PIXELFORMAT_ARGB8888,
+        SDL_PIXELFORMAT_RGBA32,
         SDL_TEXTUREACCESS_STREAMING,
         width,
         height
