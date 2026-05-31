@@ -1,5 +1,3 @@
-#pragma once
-
 #include "lights.h"
 #include <glm/geometric.hpp>
 

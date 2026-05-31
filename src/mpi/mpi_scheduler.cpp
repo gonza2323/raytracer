@@ -95,10 +95,10 @@ namespace mpi_scheduler
                 }
 
                 int percent = (completed_tiles * 100) / total_tiles;
-                std::cout << "\rProgress: " << std::setw(3) << percent << "%" << std::flush;
+                std::cout << "Progress: " << std::setw(3) << percent << "%\n" << std::flush;
                 if (completed_tiles == total_tiles)
                 {
-                    std::cout << "\nRendering complete!" << std::endl;
+                    std::cout << "Rendering complete!" << std::endl;
                 }
             }
         }
