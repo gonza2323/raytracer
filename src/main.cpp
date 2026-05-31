@@ -84,9 +84,9 @@ int main(int argc, char* argv[])
             int remaining = renderer.getRemainingTiles();
             int progress = total - remaining;
             int percent = (progress * 100) / total;
-            std::cout << "\rProgress: " << std::setw(3) << percent << "%" << std::flush;
+            std::cout << "Progress: " << std::setw(3) << percent << "%\n" << std::flush;
         }
-        std::cout << "\nRendering complete!" << std::endl;
+        std::cout << "Rendering complete!" << std::endl;
         
         // Save the rendered image
         stbi_write_png(output_path.c_str(), width, height, 4, renderer.getPixels(), width * sizeof(uint32_t));
@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
             int remaining = renderer.getRemainingTiles();
             int progress = total - remaining;
             int percent = (progress * 100) / total;
-            std::cout << "\rProgress: " << std::setw(3) << percent << "%" << std::flush;
+            std::cout << "Progress: " << std::setw(3) << percent << "%\n" << std::flush;
             completed = !tiles_left;
             
             // Actualizar la imagen 
@@ -149,7 +149,7 @@ int main(int argc, char* argv[])
             
             // Save image when rendering is completed
             if (completed) {
-                std::cout << "\nRendering complete!" << std::endl;
+                std::cout << "Rendering complete!" << std::endl;
                 stbi_write_png(output_path.c_str(), width, height, 4, renderer.getPixels(), width * sizeof(uint32_t));
             }
         }
