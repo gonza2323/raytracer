@@ -32,7 +32,6 @@ void SceneLoader::load_camera(Scene& scene, const fastgltf::Asset& asset)
     // If no cameras in the scene, use default
     if (asset.cameras.empty())
     {
-        std::cout << "No camera in glTF file, using default camera\n";
         scene.camera = Camera(default_pos, default_rot, default_focal_length, default_sensor_x, default_sensor_y);
         return;
     }
@@ -111,17 +110,6 @@ void SceneLoader::load_camera(Scene& scene, const fastgltf::Asset& asset)
         {
             sensor_x = sensor_y * 1.5f; // Assume 3:2 ratio if not specified (35mm aspect)
         }
-
-        std::cout << "Loaded camera from glTF\n";
-        std::cout << "  Position: (" << cam_pos.x << ", " << cam_pos.y << ", " << cam_pos.z << ")\n";
-        std::cout << "  Rotation (radians): (" << cam_rot.x << ", " << cam_rot.y << ", " << cam_rot.z << ")\n";
-        std::cout << "  Focal length: " << focal_length * 1000.0f << " mm\n";
-        std::cout << "  Sensor size: " << sensor_x * 1000.0f << "x" << sensor_y * 1000.0f << " mm\n";
-    }
-    else if (std::holds_alternative<fastgltf::Camera::Orthographic>(gltf_camera.camera))
-    {
-        // Orthographic cameras are not commonly used for ray tracing, use default
-        std::cout << "Orthographic camera not supported, using default perspective\n";
     }
 
     scene.camera = Camera(cam_pos, cam_rot, focal_length, sensor_x, sensor_y);
@@ -164,8 +152,6 @@ bool SceneLoader::load_from_path(Scene& scene, const std::string& file_path)
 
     // 3. Load nodes (geometry)
     load_nodes(scene, asset);
-
-    std::cout << "Loaded " << scene.triangles.size() << " triangles\n";
 
     // 4. Build BVH
     scene.build_bvh();
