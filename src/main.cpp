@@ -11,8 +11,6 @@
 #include <vector>
 #include <iostream>
 
-#include <SDL3/SDL.h>
-
 #include "lights.h"
 #include "scene.h"
 #include "renderer.h"
@@ -31,7 +29,6 @@ int main(int argc, char* argv[])
     std::string scene_path = "assets/Test.glb";
     int no_samples = 30;
     std::string output_path = "output.png";
-    bool headless = false;
 
     // Parse command-line arguments
     for (int i = 1; i < argc; ++i)
@@ -53,10 +50,6 @@ int main(int argc, char* argv[])
         else if ((arg == "-o" || arg == "--output") && i + 1 < argc)
         {
             output_path = argv[++i];
-        }
-        else if (arg == "--headless")
-        {
-            headless = true;
         }
     }
 
@@ -90,47 +83,6 @@ int main(int argc, char* argv[])
         std::vector<uint32_t> framebuffer;
         mpi_scheduler::MasterCallbacks callbacks{};
 
-        SDL_Window* window = nullptr;
-        SDL_Renderer* sdl_renderer = nullptr;
-        SDL_Texture* texture = nullptr;
-
-        if (!headless)
-        {
-            SDL_Init(SDL_INIT_VIDEO);
-
-            int width = renderer.getWidth();
-            window = SDL_CreateWindow("Raytracer", width, height, 0);
-            sdl_renderer = SDL_CreateRenderer(window, NULL);
-            texture = SDL_CreateTexture(
-                sdl_renderer,
-                SDL_PIXELFORMAT_RGBA32,
-                SDL_TEXTUREACCESS_STREAMING,
-                width,
-                height
-            );
-
-            callbacks.on_tile = [&](const std::vector<uint32_t>& fb, int, int)
-            {
-                SDL_UpdateTexture(texture, NULL, fb.data(), width * sizeof(uint32_t));
-                SDL_RenderClear(sdl_renderer);
-                SDL_RenderTexture(sdl_renderer, texture, NULL, NULL);
-                SDL_RenderPresent(sdl_renderer);
-            };
-
-            callbacks.on_idle = [&]()
-            {
-                SDL_Event event;
-                while (SDL_PollEvent(&event))
-                {
-                    if (event.type == SDL_EVENT_QUIT)
-                    {
-                        return false;
-                    }
-                }
-                return true;
-            };
-        }
-
         bool completed = mpi_scheduler::run_master_render(renderer, world_size, framebuffer, callbacks);
         if (completed)
         {
@@ -140,29 +92,6 @@ int main(int argc, char* argv[])
             auto end_time = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
             std::cout << "Elapsed time: " << duration.count() / 1000.0f << " s\n";
-        }
-
-        if (!headless)
-        {
-            bool running = true;
-
-            while (running)
-            {
-                SDL_Event event;
-                while (SDL_PollEvent(&event))
-                {
-                    if (event.type == SDL_EVENT_QUIT)
-                    {
-                        running = false;
-                    }
-                }
-                SDL_Delay(16);
-            }
-
-            SDL_DestroyTexture(texture);
-            SDL_DestroyRenderer(sdl_renderer);
-            SDL_DestroyWindow(window);
-            SDL_Quit();
         }
     }
     else

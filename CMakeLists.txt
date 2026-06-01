@@ -24,14 +24,12 @@ add_executable(raytracer
 
 # Dependencies
 
-find_package(SDL3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(fastgltf CONFIG REQUIRED)
 find_package(MPI REQUIRED)
 
 target_link_libraries(raytracer
     PRIVATE
-        SDL3::SDL3
         glm::glm
         fastgltf::fastgltf
         MPI::MPI_CXX

@@ -2,11 +2,6 @@
   "name": "raytracer",
   "version-string": "0.1.0",
   "dependencies": [
-    {
-      "name": "sdl3",
-      "features": ["x11", "wayland"],
-      "default-features": false
-    },
     "glm",
     "fastgltf",
     "stb"

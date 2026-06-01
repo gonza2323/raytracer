@@ -3,7 +3,6 @@
 #include "ray.h"
 #include "scene.h"
 #include "tile.h"
-#include <SDL3/SDL_stdinc.h>
 #include <cmath>
 #include <cstdint>
 #include <glm/ext/vector_int3.hpp>
