@@ -12,6 +12,7 @@
 #include <string>
 #include <iostream>
 #include <iomanip>
+#include <chrono>
 
 #include "lights.h"
 #include "scene.h"
@@ -21,6 +22,8 @@
 
 int main(int argc, char* argv[])
 {
+    auto start_time = std::chrono::high_resolution_clock::now();
+
     // PARSE PROGRAM ARGUMENTS
     
     // Default values
@@ -90,6 +93,11 @@ int main(int argc, char* argv[])
         
         // Save the rendered image
         stbi_write_png(output_path.c_str(), width, height, 4, renderer.getPixels(), width * sizeof(uint32_t));
+
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+        std::cout << "Elapsed time: " << duration.count() / 1000.0f << " s\n";
+
         return 0;
     }
 
@@ -151,6 +159,10 @@ int main(int argc, char* argv[])
             if (completed) {
                 std::cout << "Rendering complete!" << std::endl;
                 stbi_write_png(output_path.c_str(), width, height, 4, renderer.getPixels(), width * sizeof(uint32_t));
+
+                auto end_time = std::chrono::high_resolution_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+                std::cout << "Elapsed time: " << duration.count() / 1000.0f << " s\n";
             }
         }
 
