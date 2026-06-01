@@ -9,6 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include <SDL3/SDL.h>
 
@@ -17,10 +18,12 @@
 #include "renderer.h"
 #include "scene_loader.h"
 #include "mpi/mpi_scheduler.h"
+#include <chrono>
 
 
 int main(int argc, char* argv[])
 {
+    auto start_time = std::chrono::high_resolution_clock::now();
     // PARSE PROGRAM ARGUMENTS
 
     // Default values
@@ -133,10 +136,29 @@ int main(int argc, char* argv[])
         {
             int width = renderer.getWidth();
             stbi_write_png(output_path.c_str(), width, height, 4, framebuffer.data(), width * sizeof(uint32_t));
+
+            auto end_time = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+            std::cout << "Elapsed time: " << duration.count() / 1000.0f << " s\n";
         }
 
         if (!headless)
         {
+            bool running = true;
+
+            while (running)
+            {
+                SDL_Event event;
+                while (SDL_PollEvent(&event))
+                {
+                    if (event.type == SDL_EVENT_QUIT)
+                    {
+                        running = false;
+                    }
+                }
+                SDL_Delay(16);
+            }
+
             SDL_DestroyTexture(texture);
             SDL_DestroyRenderer(sdl_renderer);
             SDL_DestroyWindow(window);
