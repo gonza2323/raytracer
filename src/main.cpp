@@ -1,9 +1,6 @@
-#include <SDL3/SDL_pixels.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_timer.h>
 #include <cstdint>
 #include <glm/ext/vector_float3.hpp>
 #include <stdint.h>
@@ -31,7 +28,6 @@ int main(int argc, char* argv[])
     std::string scene_path = "assets/Test.glb";
     int no_samples = 30;
     std::string output_path = "output.png";
-    bool headless = false;
     
     // Parse command-line arguments
     for (int i = 1; i < argc; ++i) {
@@ -45,8 +41,6 @@ int main(int argc, char* argv[])
             no_samples = std::stoi(argv[++i]);
         } else if ((arg == "-o" || arg == "--output") && i + 1 < argc) {
             output_path = argv[++i];
-        } else if (arg == "--headless") {
-            headless = true;
         }
     }
 
@@ -78,103 +72,23 @@ int main(int argc, char* argv[])
     Renderer renderer(scene, height, no_samples);
     width = renderer.getWidth();
 
-    // HEADLESS MODE - Render and save without UI
-    if (headless) {
-        bool tiles_left = true;
-        while (tiles_left) {
-            tiles_left = renderer.advance();
-            int total = renderer.getTotalTiles();
-            int remaining = renderer.getRemainingTiles();
-            int progress = total - remaining;
-            int percent = (progress * 100) / total;
-            std::cout << "Progress: " << std::setw(3) << percent << "%\n" << std::flush;
-        }
-        std::cout << "Rendering complete!" << std::endl;
-        
-        // Save the rendered image
-        stbi_write_png(output_path.c_str(), width, height, 4, renderer.getPixels(), width * sizeof(uint32_t));
-
-        auto end_time = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
-        std::cout << "Elapsed time: " << duration.count() / 1000.0f << " s\n";
-
-        return 0;
+    bool tiles_left = true;
+    while (tiles_left) {
+        tiles_left = renderer.advance();
+        int total = renderer.getTotalTiles();
+        int remaining = renderer.getRemainingTiles();
+        int progress = total - remaining;
+        int percent = (progress * 100) / total;
+        std::cout << "Progress: " << std::setw(3) << percent << "%\n" << std::flush;
     }
+    std::cout << "Rendering complete!" << std::endl;
+    
+    // Save the rendered image
+    stbi_write_png(output_path.c_str(), width, height, 4, renderer.getPixels(), width * sizeof(uint32_t));
 
-    // INICIALIZAR GUI
-
-    SDL_Init(SDL_INIT_VIDEO);
-
-    SDL_Window* window = SDL_CreateWindow(
-        "Raytracer",
-        width,
-        height,
-        0
-    );
-
-    SDL_Renderer* sdl_renderer = SDL_CreateRenderer(window, NULL);
-
-    // Texture that we can update every frame
-    SDL_Texture* texture = SDL_CreateTexture(
-        sdl_renderer,
-        SDL_PIXELFORMAT_RGBA32,
-        SDL_TEXTUREACCESS_STREAMING,
-        width,
-        height
-    );
-
-
-    // LOOP DE LA INTERFAZ GRÁFICA
-
-    bool running = true;
-    bool completed = false;
-    while (running) {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-            if (event.type == SDL_EVENT_QUIT)
-                running = false;
-
-        if (!completed) {
-            bool tiles_left = renderer.advance();
-            int total = renderer.getTotalTiles();
-            int remaining = renderer.getRemainingTiles();
-            int progress = total - remaining;
-            int percent = (progress * 100) / total;
-            std::cout << "Progress: " << std::setw(3) << percent << "%\n" << std::flush;
-            completed = !tiles_left;
-            
-            // Actualizar la imagen 
-            SDL_UpdateTexture(
-                texture,
-                NULL,
-                renderer.getPixels(),
-                width * sizeof(uint32_t)
-            );
-            
-            SDL_RenderClear(sdl_renderer);
-            SDL_RenderTexture(sdl_renderer, texture, NULL, NULL);
-            SDL_RenderPresent(sdl_renderer);
-            
-            // Save image when rendering is completed
-            if (completed) {
-                std::cout << "Rendering complete!" << std::endl;
-                stbi_write_png(output_path.c_str(), width, height, 4, renderer.getPixels(), width * sizeof(uint32_t));
-
-                auto end_time = std::chrono::high_resolution_clock::now();
-                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
-                std::cout << "Elapsed time: " << duration.count() / 1000.0f << " s\n";
-            }
-        }
-
-        if (completed)
-            SDL_Delay(50);
-    }
-
-    SDL_DestroyTexture(texture);
-    SDL_DestroyRenderer(sdl_renderer);
-    SDL_DestroyWindow(window);
-
-    SDL_Quit();
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    std::cout << "Elapsed time: " << duration.count() / 1000.0f << " s\n";
 
     return 0;
 }
